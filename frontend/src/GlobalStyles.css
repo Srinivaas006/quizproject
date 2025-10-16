@@ -1,7 +1,7 @@
 /* Global Variables */
 :root {
   /* Light Mode Colors */
-  --primary-blue: #3b82f6;
+  --primary-blue: #246cfc;
   --primary-blue-dark: #2563eb;
   --primary-blue-light: #60a5fa;
   --secondary-blue: #e0f2fe;
@@ -348,4 +348,96 @@ body {
   .btn {
     padding: 0.875rem 1.25rem;
   }
+}
+input[type="email"] {
+  border: 2px solid #18181b !important;    /* dark black in light mode */
+}
+[data-theme="dark"] input[type="email"] {
+  border: 2px solid #374151 !important;    /* soft dark gray in dark mode */
+}
+[data-theme="dark"] input[type="email"]:focus {
+  border: 2px solid #fff !important;       /* white border on focus in dark mode */
+}
+/* General inputs including email, password, text, etc */
+input, textarea, select {
+  border: 2px solid #18181b !important;    /* dark black in light mode */
+  color: var(--input-text);
+  background-color: var(--input-bg);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  border: 2px solid #374151 !important;    /* softer dark gray in dark mode */
+  color: var(--input-text);
+  background-color: var(--input-bg);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border: 2px solid #fff !important;       /* white border on focus in dark mode */
+  outline: none;
+  box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5);
+}
+
+ .gradient-text-animated {
+  background: linear-gradient(
+    90deg,
+    #551A8B,
+    #8A2BE2,
+    #6B37CA,
+    #551A8B,
+    #8A2BE2
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientMoveFast 1s linear infinite; /* Fast animation */
+  font-weight: 600;
+  font-size: 1.25rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+@keyframes gradientMoveFast {
+  0% {
+    background-position: 0% 40%;
+  }
+  100% {
+    background-position: 100% 60%;
+  }
+}
+.dark-mode-toggle {
+  width: 56px;
+  height: 32px;
+  background: linear-gradient(90deg, #1a2332, #374151, #0B5CFF);
+  border-radius: 16px;
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(45, 140, 255, 0.13);
+  transition: background 0.4s cubic-bezier(.55,0,.1,1);
+}
+.dark-mode-toggle-inner {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 1px rgba(45, 140, 255, 0.15);
+  transition: left 0.3s cubic-bezier(.55,0,.1,1), background 0.4s cubic-bezier(.55,0,.1,1);
+}
+[data-theme='dark'] .dark-mode-toggle-inner {
+  left: 28px;
+  background: #FADA7A;
+}
+.dark-mode-toggle:hover {
+  background: linear-gradient(90deg, #243D73, #2D8CFF, #0B5CFF);
 }

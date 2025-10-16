@@ -115,9 +115,11 @@ export default function JoinQuiz() {
             Are you a teacher?
           </p>
           <button
+         
             onClick={() => navigate('/login')}
             className="btn btn-secondary"
             disabled={loading}
+           
           >
             Teacher Login
           </button>

@@ -71,6 +71,7 @@ export default function Login() {
               placeholder="Enter your email"
               required
               disabled={loading}
+             
             />
           </div>
 
@@ -107,11 +108,8 @@ export default function Login() {
           paddingTop: '1.5rem',
           marginTop: '1.5rem'
         }}>
-          <p style={{ 
-            color: 'var(--text-secondary)', 
-            fontSize: '0.9rem',
-            marginBottom: '1rem'
-          }}>
+          <p className="gradient-text-animated"
+          >
             New teacher? Create your account
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
