@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+
 export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -274,3 +275,4 @@ export default function Results() {
     </div>
   );
 }
+

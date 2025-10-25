@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { createQuiz } from '../api';
+
 
 export default function CreateQuiz() {
   const [title, setTitle] = useState('');
@@ -12,6 +13,8 @@ export default function CreateQuiz() {
   const [sessionCode, setSessionCode] = useState('');
   const [copied, setCopied] = useState(false);
   const { token } = useContext(AuthContext);
+  const cardRef = useRef(null);
+
 
   const addQuestion = () => {
     setQuestions([
@@ -20,11 +23,13 @@ export default function CreateQuiz() {
     ]);
   };
 
+
   const removeQuestion = (index) => {
     if (questions.length > 1) {
       setQuestions(questions.filter((_, i) => i !== index));
     }
   };
+
 
   const updateQuestion = (index, field, value) => {
     const updated = [...questions];
@@ -32,17 +37,20 @@ export default function CreateQuiz() {
     setQuestions(updated);
   };
 
+
   const updateOption = (qIndex, oIndex, value) => {
     const updated = [...questions];
     updated[qIndex].options[oIndex] = value;
     setQuestions(updated);
   };
 
+
   const addOption = (qIndex) => {
     const updated = [...questions];
     updated[qIndex].options.push('');
     setQuestions(updated);
   };
+
 
   const removeOption = (qIndex, oIndex) => {
     const updated = [...questions];
@@ -55,6 +63,7 @@ export default function CreateQuiz() {
       setQuestions(updated);
     }
   };
+
 
   const copyToClipboard = async () => {
     try {
@@ -79,9 +88,35 @@ export default function CreateQuiz() {
     }
   };
 
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    
+    const card = cardRef.current;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const rotateX = (y - centerY) / 10;
+    const rotateY = (centerX - x) / 10;
+    
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+  };
+
+
+  const handleMouseLeave = () => {
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
 
     try {
       const { data } = await createQuiz({
@@ -98,6 +133,7 @@ export default function CreateQuiz() {
       setLoading(false);
     }
   };
+
 
   if (sessionCode) {
     return (
@@ -136,9 +172,12 @@ export default function CreateQuiz() {
             Share this code with your students
           </p>
           
-          {/* Clickable Session Code */}
+          {/* Clickable Session Code with Mouse Tracking */}
           <div 
+            ref={cardRef}
             onClick={copyToClipboard}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             style={{ 
               background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
               color: 'white',
@@ -149,14 +188,13 @@ export default function CreateQuiz() {
               fontWeight: 'bold',
               letterSpacing: '3px',
               cursor: 'pointer',
-              transition: 'var(--transition)',
+              transition: 'transform 0.1s ease-out',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              transformStyle: 'preserve-3d'
             }}
             className="card"
             title="Click to copy"
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
-            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
           >
             {sessionCode}
             {copied && (
@@ -203,7 +241,7 @@ export default function CreateQuiz() {
             
             <button 
               onClick={() => window.location.href = '/join'}
-              className="btn btn-secondary"
+              className="btn btn-primary"
             >
               Join This Quiz
             </button>
@@ -212,6 +250,7 @@ export default function CreateQuiz() {
       </div>
     );
   }
+
 
   return (
     <div className="container" style={{ 
@@ -238,6 +277,7 @@ export default function CreateQuiz() {
             Build an engaging quiz for your students
           </p>
         </div>
+
 
         <form onSubmit={handleSubmit}>
           {/* Quiz Settings */}
@@ -267,6 +307,7 @@ export default function CreateQuiz() {
                 />
               </div>
 
+
               <div className="form-group">
                 <label className="form-label">Time per Question (seconds)</label>
                 <input
@@ -282,6 +323,7 @@ export default function CreateQuiz() {
               </div>
             </div>
           </div>
+
 
           {/* Questions Section */}
           <div className="card" style={{ marginBottom: '2rem' }}>
@@ -306,6 +348,7 @@ export default function CreateQuiz() {
                 + Add Question
               </button>
             </div>
+
 
             {questions.map((question, qIndex) => (
               <div 
@@ -363,6 +406,7 @@ export default function CreateQuiz() {
                   )}
                 </div>
 
+
                 {/* Question Text */}
                 <div className="form-group">
                   <label className="form-label">Question Text</label>
@@ -376,6 +420,7 @@ export default function CreateQuiz() {
                     disabled={loading}
                   />
                 </div>
+
 
                 {/* Options Section */}
                 <div className="form-group">
@@ -398,6 +443,7 @@ export default function CreateQuiz() {
                       + Add Option
                     </button>
                   </div>
+
 
                   {question.options.map((option, oIndex) => (
                     <div key={oIndex} style={{ 
@@ -485,6 +531,7 @@ export default function CreateQuiz() {
               </div>
             ))}
           </div>
+
 
           {/* Submit Button */}
           <div style={{ textAlign: 'center' }}>
