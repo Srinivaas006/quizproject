@@ -9,7 +9,6 @@ import Results from './components/Results';
 import { AuthContext } from './contexts/AuthContext';
 import './GlobalStyles.css';
 
-// Theme Context
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
@@ -32,7 +31,6 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-// Theme Toggle Component
 const ThemeToggle = () => {
   const { isDarkMode, toggleTheme } = useContext(ThemeContext);
   
@@ -55,7 +53,7 @@ function App() {
         <ThemeToggle />
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} /> {/* New route */}
+          <Route path="/register" element={<Register />} /> {}
           <Route path="/create" element={<Private><CreateQuiz /></Private>} />
           <Route path="/join" element={<JoinQuiz />} />
           <Route path="/quiz/:code" element={<QuizSession />} />
