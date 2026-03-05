@@ -6,7 +6,7 @@ export default function QuizSession() {
   const { code } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-const [socket] = useState(() => io(process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"));
+const [socket] = useState(() => io("https://quizproject-backend.onrender.com"));
   const [qIndex, setQIndex] = useState(0);
   const [question, setQuestion] = useState(null);
   const [time, setTime] = useState(0);
