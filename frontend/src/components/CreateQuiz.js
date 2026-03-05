@@ -7,7 +7,7 @@ export default function CreateQuiz() {
   const [title, setTitle] = useState('');
   const [timePerQuestion, setTimePerQuestion] = useState(15);
   const [questions, setQuestions] = useState([
-    { text: '', options: ['', ''], correctIndex: 0 } // Start with 2 options
+    { text: '', options: ['', ''], correctIndex: 0 }
   ]);
   const [loading, setLoading] = useState(false);
   const [sessionCode, setSessionCode] = useState('');
@@ -54,9 +54,9 @@ export default function CreateQuiz() {
 
   const removeOption = (qIndex, oIndex) => {
     const updated = [...questions];
-    if (updated[qIndex].options.length > 2) { // Keep minimum 2 options
+    if (updated[qIndex].options.length > 2) {
       updated[qIndex].options.splice(oIndex, 1);
-      // If removed option was the correct one, reset to first option
+
       if (updated[qIndex].correctIndex >= updated[qIndex].options.length) {
         updated[qIndex].correctIndex = 0;
       }
@@ -71,7 +71,7 @@ export default function CreateQuiz() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      // Fallback for older browsers
+
       const textArea = document.createElement('textarea');
       textArea.value = sessionCode;
       document.body.appendChild(textArea);
@@ -91,18 +91,18 @@ export default function CreateQuiz() {
 
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
-    
+
     const card = cardRef.current;
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    
+
     const rotateX = (y - centerY) / 10;
     const rotateY = (centerX - x) / 10;
-    
+
     card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
   };
 
@@ -124,7 +124,7 @@ export default function CreateQuiz() {
         questions,
         timePerQuestion
       }, token);
-      
+
       setSessionCode(data.sessionCode);
     } catch (error) {
       alert('Failed to create quiz. Please try again.');
@@ -137,48 +137,48 @@ export default function CreateQuiz() {
 
   if (sessionCode) {
     return (
-      <div className="container" style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div className="container" style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         padding: '2rem 1rem'
       }}>
-        <div className="card fade-in" style={{ 
-          maxWidth: '450px', 
+        <div className="card fade-in" style={{
+          maxWidth: '450px',
           width: '100%',
           textAlign: 'center'
         }}>
-          <div style={{ 
-            fontSize: '3rem', 
-            marginBottom: '1rem' 
+          <div style={{
+            fontSize: '3rem',
+            marginBottom: '1rem'
           }}>
             🎉
           </div>
-          
-          <h1 style={{ 
-            color: 'var(--primary-blue)', 
+
+          <h1 style={{
+            color: 'var(--primary-blue)',
             marginBottom: '1rem',
             fontSize: '2rem'
           }}>
             Quiz Created!
           </h1>
-          
-          <p style={{ 
-            color: 'var(--text-secondary)', 
+
+          <p style={{
+            color: 'var(--text-secondary)',
             marginBottom: '1.5rem',
             fontSize: '1rem'
           }}>
             Share this code with your students
           </p>
-          
-          {/* Clickable Session Code with Mouse Tracking */}
-          <div 
+
+          { }
+          <div
             ref={cardRef}
             onClick={copyToClipboard}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
               color: 'white',
               padding: '1rem 1.5rem',
@@ -211,23 +211,23 @@ export default function CreateQuiz() {
               </div>
             )}
           </div>
-          
-          <p style={{ 
-            color: 'var(--text-secondary)', 
+
+          <p style={{
+            color: 'var(--text-secondary)',
             fontSize: '0.85rem',
             marginBottom: '2rem',
             opacity: 0.7
           }}>
             👆 Click to copy
           </p>
-          
-          <div style={{ 
-            display: 'flex', 
-            gap: '1rem', 
+
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
             justifyContent: 'center',
             flexWrap: 'wrap'
           }}>
-            <button 
+            <button
               onClick={() => {
                 setSessionCode('');
                 setTitle('');
@@ -238,8 +238,8 @@ export default function CreateQuiz() {
             >
               Create Another Quiz
             </button>
-            
-            <button 
+
+            <button
               onClick={() => window.location.href = '/join'}
               className="btn btn-primary"
             >
@@ -253,15 +253,15 @@ export default function CreateQuiz() {
 
 
   return (
-    <div className="container" style={{ 
-      minHeight: '100vh', 
-      padding: '2rem 1rem' 
+    <div className="container" style={{
+      minHeight: '100vh',
+      padding: '2rem 1rem'
     }}>
       <div className="fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <div className="card" style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <h1 style={{ 
-            fontSize: '2.5rem', 
-            fontWeight: 'bold', 
+          <h1 style={{
+            fontSize: '2.5rem',
+            fontWeight: 'bold',
             background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -269,7 +269,7 @@ export default function CreateQuiz() {
           }}>
             Create Quiz
           </h1>
-          <p style={{ 
+          <p style={{
             color: 'var(--text-secondary)',
             fontSize: '1.1rem',
             margin: 0
@@ -280,19 +280,19 @@ export default function CreateQuiz() {
 
 
         <form onSubmit={handleSubmit}>
-          {/* Quiz Settings */}
+          { }
           <div className="card" style={{ marginBottom: '2rem' }}>
-            <h3 style={{ 
-              color: 'var(--primary-blue)', 
-              marginBottom: '1.5rem' 
+            <h3 style={{
+              color: 'var(--primary-blue)',
+              marginBottom: '1.5rem'
             }}>
               📋 Quiz Settings
             </h3>
-            
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-              gap: '1.5rem' 
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1.5rem'
             }}>
               <div className="form-group">
                 <label className="form-label">Quiz Title</label>
@@ -306,8 +306,6 @@ export default function CreateQuiz() {
                   disabled={loading}
                 />
               </div>
-
-
               <div className="form-group">
                 <label className="form-label">Time per Question (seconds)</label>
                 <input
@@ -323,19 +321,16 @@ export default function CreateQuiz() {
               </div>
             </div>
           </div>
-
-
-          {/* Questions Section */}
           <div className="card" style={{ marginBottom: '2rem' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '2rem'
             }}>
-              <h3 style={{ 
-                color: 'var(--primary-blue)', 
-                margin: 0 
+              <h3 style={{
+                color: 'var(--primary-blue)',
+                margin: 0
               }}>
                 ❓ Questions ({questions.length})
               </h3>
@@ -351,10 +346,10 @@ export default function CreateQuiz() {
 
 
             {questions.map((question, qIndex) => (
-              <div 
-                key={qIndex} 
+              <div
+                key={qIndex}
                 className="slide-in"
-                style={{ 
+                style={{
                   backgroundColor: 'var(--surface)',
                   border: '1px solid var(--border)',
                   borderRadius: 'var(--radius-lg)',
@@ -363,15 +358,15 @@ export default function CreateQuiz() {
                   position: 'relative'
                 }}
               >
-                {/* Question Header */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
+                
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   marginBottom: '1rem'
                 }}>
-                  <h4 style={{ 
-                    color: 'var(--primary-blue)', 
+                  <h4 style={{
+                    color: 'var(--primary-blue)',
                     margin: 0,
                     display: 'flex',
                     alignItems: 'center',
@@ -406,8 +401,6 @@ export default function CreateQuiz() {
                   )}
                 </div>
 
-
-                {/* Question Text */}
                 <div className="form-group">
                   <label className="form-label">Question Text</label>
                   <input
@@ -422,11 +415,10 @@ export default function CreateQuiz() {
                 </div>
 
 
-                {/* Options Section */}
                 <div className="form-group">
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '1rem'
                   }}>
@@ -446,16 +438,16 @@ export default function CreateQuiz() {
 
 
                   {question.options.map((option, oIndex) => (
-                    <div key={oIndex} style={{ 
-                      display: 'flex', 
-                      gap: '1rem', 
+                    <div key={oIndex} style={{
+                      display: 'flex',
+                      gap: '1rem',
                       alignItems: 'center',
                       marginBottom: '0.75rem',
                       padding: '0.75rem',
-                      backgroundColor: question.correctIndex === oIndex ? 
+                      backgroundColor: question.correctIndex === oIndex ?
                         'rgba(59, 130, 246, 0.1)' : 'var(--background)',
                       borderRadius: 'var(--radius)',
-                      border: question.correctIndex === oIndex ? 
+                      border: question.correctIndex === oIndex ?
                         '2px solid var(--primary-blue)' : '1px solid var(--border)',
                       transition: 'var(--transition)'
                     }}>
@@ -465,7 +457,7 @@ export default function CreateQuiz() {
                         checked={question.correctIndex === oIndex}
                         onChange={() => updateQuestion(qIndex, 'correctIndex', oIndex)}
                         disabled={loading}
-                        style={{ 
+                        style={{
                           accentColor: 'var(--primary-blue)',
                           transform: 'scale(1.3)'
                         }}
@@ -492,7 +484,7 @@ export default function CreateQuiz() {
                         placeholder={`Option ${String.fromCharCode(65 + oIndex)}`}
                         required
                         disabled={loading}
-                        style={{ 
+                        style={{
                           flex: 1,
                           border: 'none',
                           backgroundColor: 'transparent'
@@ -518,9 +510,9 @@ export default function CreateQuiz() {
                       )}
                     </div>
                   ))}
-                  
-                  <p style={{ 
-                    color: 'var(--text-secondary)', 
+
+                  <p style={{
+                    color: 'var(--text-secondary)',
                     fontSize: '0.85rem',
                     margin: '0.5rem 0 0 0',
                     fontStyle: 'italic'
@@ -532,13 +524,11 @@ export default function CreateQuiz() {
             ))}
           </div>
 
-
-          {/* Submit Button */}
           <div style={{ textAlign: 'center' }}>
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ 
+              style={{
                 fontSize: '1.1rem',
                 padding: '1rem 2rem',
                 minWidth: '200px'
@@ -554,10 +544,10 @@ export default function CreateQuiz() {
                 '🚀 Create Quiz'
               )}
             </button>
-            
+
             {questions.some(q => !q.text || q.options.some(o => !o)) && (
-              <p style={{ 
-                color: 'var(--error)', 
+              <p style={{
+                color: 'var(--error)',
                 fontSize: '0.85rem',
                 marginTop: '0.5rem'
               }}>

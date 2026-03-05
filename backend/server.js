@@ -16,7 +16,7 @@ socketHandler(io);
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://quizproject-5.onrender.com',  // Your frontend URL
+    'https://quizproject-5.onrender.com', 
     process.env.FRONTEND_URL
   ],
   credentials: true,

@@ -50,7 +50,7 @@ export default function Results() {
       padding: '1.5rem 1rem' 
     }}>
       <div className="fade-in" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        {/* Compact Header */}
+     
         <div className="card" style={{ 
           marginBottom: '1.5rem', 
           textAlign: 'center',
@@ -74,7 +74,6 @@ export default function Results() {
           </p>
         </div>
 
-        {/* Compact Score Summary */}
         <div className="card slide-in" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
           <h2 style={{ 
             textAlign: 'center', 
@@ -140,7 +139,6 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Compact Wrong Answers */}
         {wrongAnswers.length > 0 ? (
           <div className="card slide-in" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
             <h3 style={{ 
@@ -258,7 +256,7 @@ export default function Results() {
           </div>
         )}
 
-        {/* Compact Action Button */}
+       
         <div style={{ textAlign: 'center' }}>
           <button 
             onClick={() => navigate('/join')}

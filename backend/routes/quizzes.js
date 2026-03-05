@@ -14,7 +14,6 @@ const auth = (req, res, next) => {
   }
 };
 
-// Create quiz
 router.post('/', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).end();
   const { title, timePerQuestion, questions } = req.body;
@@ -24,14 +23,12 @@ router.post('/', auth, async (req, res) => {
   res.json({ sessionCode });
 });
 
-// Fetch quiz meta
 router.get('/:code', async (req, res) => {
   const quiz = await Quiz.findOne({ sessionCode: req.params.code });
   if (!quiz) return res.status(404).end();
   res.json({ title: quiz.title, questions: quiz.questions, timePerQuestion: quiz.timePerQuestion });
 });
 
-// Save result
 router.post('/:code/result', async (req, res) => {
   const { name, correctCount, incorrectCount } = req.body;
   const result = new Result({ sessionCode: req.params.code, participantName: name, correctCount, incorrectCount });

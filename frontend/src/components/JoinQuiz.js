@@ -18,7 +18,6 @@ export default function JoinQuiz() {
 
     setLoading(true);
     
-    // Simulate loading for UX
     setTimeout(() => {
       navigate(`/quiz/${code.trim()}`, { 
         state: { name: name.trim() } 

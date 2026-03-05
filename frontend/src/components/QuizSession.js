@@ -6,7 +6,7 @@ export default function QuizSession() {
   const { code } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [socket] = useState(() => io("http://localhost:5000"));
+  const [socket] = useState(() => io(process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"));
   const [qIndex, setQIndex] = useState(0);
   const [question, setQuestion] = useState(null);
   const [time, setTime] = useState(0);
@@ -137,7 +137,7 @@ export default function QuizSession() {
       padding: '2rem 1rem' 
     }}>
       <div className="fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Header */}
+      
         <div className="card" style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <div style={{ 
             display: 'flex', 
@@ -171,7 +171,6 @@ export default function QuizSession() {
           </div>
         </div>
 
-        {/* Question */}
         <div className="card slide-in" style={{ marginBottom: '2rem' }}>
           <h3 style={{ 
             fontSize: '1.4rem', 

@@ -55,7 +55,6 @@ module.exports = (io) => {
         const question = quiz.questions[questionIndex];
         if (!question) return;
 
-        // Prevent duplicate processing
         if (socket.data.processedQuestions.includes(questionIndex)) {
           console.log(`Duplicate: Q${questionIndex + 1} already processed for ${name}`);
           return;
@@ -95,7 +94,6 @@ module.exports = (io) => {
 
         console.log(`${name} - Q${questionIndex + 1}: ${result} (${points >= 0 ? '+' : ''}${points}) | Score: ${socket.data.score} | Processed: ${socket.data.processedQuestions.length}/${socket.data.totalQuestions}`);
 
-        // Auto-finish when ALL questions are processed
         if (socket.data.processedQuestions.length === socket.data.totalQuestions) {
           setTimeout(() => {
             console.log(`All questions completed for ${socket.data.participantName}`);
@@ -134,7 +132,6 @@ module.exports = (io) => {
           return socket.emit('error', 'Session data not found');
         }
 
-        // Get final counts from answers array
         const finalCorrect = data.answers.filter(a => a.result === 'Correct').length;
         const finalIncorrect = data.answers.filter(a => a.result === 'Incorrect').length;
         const finalNotAttempted = data.answers.filter(a => a.result === 'Not Attempted').length;
