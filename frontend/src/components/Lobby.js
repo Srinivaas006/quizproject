@@ -30,9 +30,9 @@ export default function Lobby() {
       setCountdown(count);
     });
 
-    // When quiz actually starts, navigate away
+    // When quiz starts, go to teacher leaderboard
     socket.on('quizStarted', () => {
-      navigate('/create'); // Teacher goes back to dashboard
+      navigate('/teacher-leaderboard', { state: { sessionCode } });
     });
 
     return () => socket.disconnect();
@@ -77,6 +77,47 @@ export default function Lobby() {
             letterSpacing: '4px'
           }}>
             {sessionCode}
+          </div>
+
+          {/* Share Buttons */}
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/join?code=${sessionCode}`;
+                navigator.clipboard.writeText(link);
+                alert('Link copied to clipboard!');
+              }}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+            >
+              📋 Copy Link
+            </button>
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/join?code=${sessionCode}`;
+                const msg = `Join my quiz! Code: ${sessionCode} or click: ${link}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+              }}
+              className="btn btn-primary"
+              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', backgroundColor: '#25D366', borderColor: '#25D366' }}
+            >
+              📱 WhatsApp
+            </button>
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/join?code=${sessionCode}`;
+                if (navigator.share) {
+                  navigator.share({ title: 'Join My Quiz!', text: `Use code: ${sessionCode}`, url: link });
+                } else {
+                  navigator.clipboard.writeText(link);
+                  alert('Link copied!');
+                }
+              }}
+              className="btn btn-primary"
+              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+            >
+              🔗 Share
+            </button>
           </div>
         </div>
 
@@ -179,54 +220,6 @@ export default function Lobby() {
                 Waiting for at least 1 student to join
               </p>
             )}
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
-  
-  {/* Copy Link Button */}
-  <button
-    onClick={() => {
-      const link = `${window.location.origin}/join?code=${sessionCode}`;
-      navigator.clipboard.writeText(link);
-      alert('Link copied to clipboard!');
-    }}
-    className="btn btn-secondary"
-  >
-    📋 Copy Join Link
-  </button>
-
-  {/* WhatsApp Share Button */}
-  <button
-    onClick={() => {
-      const link = `${window.location.origin}/join?code=${sessionCode}`;
-      const msg = `Join my quiz! Use code: ${sessionCode} or click: ${link}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    }}
-    className="btn btn-primary"
-    style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
-  >
-    📱 Share on WhatsApp
-  </button>
-
-  {/* Native Share (works on mobile) */}
-  <button
-    onClick={() => {
-      const link = `${window.location.origin}/join?code=${sessionCode}`;
-      if (navigator.share) {
-        navigator.share({
-          title: 'Join My Quiz!',
-          text: `Use code: ${sessionCode}`,
-          url: link
-        });
-      } else {
-        navigator.clipboard.writeText(link);
-        alert('Link copied!');
-      }
-    }}
-    className="btn btn-primary"
-  >
-    🔗 Share Link
-  </button>
-
-</div>
           </div>
         )}
 
