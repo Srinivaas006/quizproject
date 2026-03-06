@@ -17,7 +17,7 @@ export default function TeacherLeaderboard() {
   useEffect(() => {
     if (!sessionCode) { navigate('/create'); return; }
 
-    socket.emit('teacherJoinLobby', { sessionCode });
+    socket.emit('teacherJoinRoom', { sessionCode });
 
     socket.on('liveLeaderboard', ({ leaderboard: lb, questionIndex }) => {
       setLeaderboard(lb);

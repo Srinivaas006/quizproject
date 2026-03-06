@@ -1,14 +1,24 @@
 const Quiz = require('./models/Quiz');
 const Result = require('./models/Result');
 
-// Track lobby state: { [sessionCode]: { teacherSocketId, students: [{id, name}] } }
+// Track lobby state
 const lobbies = {};
+
+// Track live scores per session: { [sessionCode]: { [socketId]: { name, score, correct, incorrect } } }
+const liveScores = {};
+
+function getSortedLeaderboard(sessionCode) {
+  if (!liveScores[sessionCode]) return [];
+  return Object.values(liveScores[sessionCode])
+    .sort((a, b) => b.score - a.score || b.correct - a.correct)
+    .map((s, i) => ({ rank: i + 1, name: s.name, score: s.score, correct: s.correct, incorrect: s.incorrect }));
+}
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log('New connection:', socket.id);
 
-    // ─── TEACHER joins lobby after creating quiz ───────────────────────────
+    // ─── TEACHER joins lobby (from Lobby page) ─────────────────────────────
     socket.on('teacherJoinLobby', ({ sessionCode }) => {
       console.log(`Teacher joined lobby for: ${sessionCode}`);
       socket.join(sessionCode);
@@ -24,26 +34,32 @@ module.exports = (io) => {
       });
     });
 
+    // ─── TEACHER joins room (from TeacherLeaderboard page) ────────────────
+    socket.on('teacherJoinRoom', ({ sessionCode }) => {
+      console.log(`Teacher joined room for leaderboard: ${sessionCode}`);
+      socket.join(sessionCode);
+
+      // Send current leaderboard immediately if data exists
+      const currentLeaderboard = getSortedLeaderboard(sessionCode);
+      if (currentLeaderboard.length > 0) {
+        socket.emit('liveLeaderboard', { leaderboard: currentLeaderboard, questionIndex: 0 });
+      }
+    });
+
+    // ─── STUDENT joins quiz ────────────────────────────────────────────────
     socket.on('joinQuiz', async ({ sessionCode, name }) => {
       console.log(`Join request: code=${sessionCode}, name="${name}"`);
 
       try {
         const quiz = await Quiz.findOne({ sessionCode });
-        if (!quiz) {
-          console.log('Quiz not found for code:', sessionCode);
-          return socket.emit('error', 'Invalid session code');
-        }
-
-        if (!name || name.trim() === '') {
-          return socket.emit('error', 'Name is required');
-        }
+        if (!quiz) return socket.emit('error', 'Invalid session code');
+        if (!name || name.trim() === '') return socket.emit('error', 'Name is required');
 
         socket.join(sessionCode);
 
-        
         socket.data = {
           participantName: name.trim(),
-          sessionCode: sessionCode,
+          sessionCode,
           score: 0,
           correct: 0,
           incorrect: 0,
@@ -53,17 +69,21 @@ module.exports = (io) => {
           processedQuestions: []
         };
 
+        // Init lobby
         if (!lobbies[sessionCode]) {
           lobbies[sessionCode] = { teacherSocketId: null, students: [] };
         }
 
-        
-        const alreadyJoined = lobbies[sessionCode].students.find(s => s.id === socket.id);
-        if (!alreadyJoined) {
+        // Init live scores
+        if (!liveScores[sessionCode]) liveScores[sessionCode] = {};
+        liveScores[sessionCode][socket.id] = { name: name.trim(), score: 0, correct: 0, incorrect: 0 };
+
+        // Avoid duplicates in lobby
+        if (!lobbies[sessionCode].students.find(s => s.id === socket.id)) {
           lobbies[sessionCode].students.push({ id: socket.id, name: name.trim() });
         }
 
-        console.log(`SUCCESS: ${name.trim()} joined lobby. Total: ${lobbies[sessionCode].students.length}`);
+        console.log(`SUCCESS: ${name.trim()} joined. Total: ${lobbies[sessionCode].students.length}`);
 
         socket.emit('waitingForTeacher', {
           students: lobbies[sessionCode].students.map(s => s.name)
@@ -79,9 +99,8 @@ module.exports = (io) => {
       }
     });
 
+    // ─── TEACHER starts quiz ───────────────────────────────────────────────
     socket.on('teacherStartQuiz', async ({ sessionCode }) => {
-      console.log(`Teacher starting quiz: ${sessionCode}`);
-
       try {
         const quiz = await Quiz.findOne({ sessionCode });
         if (!quiz) return;
@@ -89,20 +108,14 @@ module.exports = (io) => {
         let count = 3;
         const countdownInterval = setInterval(() => {
           io.to(sessionCode).emit('countdown', { count });
-          console.log(`Countdown: ${count} for ${sessionCode}`);
           count--;
-
           if (count < 0) {
             clearInterval(countdownInterval);
-
             io.to(sessionCode).emit('startQuiz', {
               questions: quiz.questions,
               timePerQuestion: quiz.timePerQuestion,
             });
-
             socket.emit('quizStarted');
-
-            console.log(`Quiz started: ${sessionCode}`);
           }
         }, 1000);
 
@@ -111,6 +124,7 @@ module.exports = (io) => {
       }
     });
 
+    // ─── STUDENT answers ───────────────────────────────────────────────────
     socket.on('answer', async ({ sessionCode, questionIndex, selectedIndex, name }) => {
       try {
         const quiz = await Quiz.findOne({ sessionCode });
@@ -119,11 +133,7 @@ module.exports = (io) => {
         const question = quiz.questions[questionIndex];
         if (!question) return;
 
-        if (socket.data.processedQuestions.includes(questionIndex)) {
-          console.log(`Duplicate: Q${questionIndex + 1} already processed for ${name}`);
-          return;
-        }
-
+        if (socket.data.processedQuestions.includes(questionIndex)) return;
         socket.data.processedQuestions.push(questionIndex);
 
         const correctIndex = question.correctIndex;
@@ -131,17 +141,11 @@ module.exports = (io) => {
         let result = '';
 
         if (selectedIndex === null || selectedIndex === undefined) {
-          points = 0;
-          result = 'Not Attempted';
-          socket.data.notAttempted++;
+          points = 0; result = 'Not Attempted'; socket.data.notAttempted++;
         } else if (selectedIndex === correctIndex) {
-          points = 1;
-          result = 'Correct';
-          socket.data.correct++;
+          points = 1; result = 'Correct'; socket.data.correct++;
         } else {
-          points = -1;
-          result = 'Incorrect';
-          socket.data.incorrect++;
+          points = -1; result = 'Incorrect'; socket.data.incorrect++;
         }
 
         socket.data.score += points;
@@ -151,16 +155,27 @@ module.exports = (io) => {
           question: question.text,
           yourAnswer: selectedIndex !== null ? question.options[selectedIndex] : 'Not Attempted',
           correctAnswer: question.options[correctIndex],
-          result: result,
-          points: points,
+          result,
+          points,
           totalScore: socket.data.score
         });
 
-        console.log(`${name} - Q${questionIndex + 1}: ${result} (${points >= 0 ? '+' : ''}${points}) | Score: ${socket.data.score}`);
+        // Update live scores
+        if (liveScores[sessionCode] && liveScores[sessionCode][socket.id]) {
+          liveScores[sessionCode][socket.id].score = socket.data.score;
+          liveScores[sessionCode][socket.id].correct = socket.data.correct;
+          liveScores[sessionCode][socket.id].incorrect = socket.data.incorrect;
+        }
 
+        console.log(`${name} - Q${questionIndex + 1}: ${result} | Score: ${socket.data.score}`);
+
+        // Broadcast live leaderboard to EVERYONE in the room (students + teacher)
+        const currentLeaderboard = getSortedLeaderboard(sessionCode);
+        io.to(sessionCode).emit('liveLeaderboard', { leaderboard: currentLeaderboard, questionIndex });
+
+        // Auto-finish when all questions done
         if (socket.data.processedQuestions.length === socket.data.totalQuestions) {
           setTimeout(() => {
-            console.log(`All questions completed for ${socket.data.participantName}`);
             socket.emit('finishQuiz', { sessionCode });
           }, 500);
         }
@@ -170,11 +185,11 @@ module.exports = (io) => {
       }
     });
 
+    // ─── Next question ─────────────────────────────────────────────────────
     socket.on('nextQuestion', async ({ sessionCode, questionIndex }) => {
       try {
         const quiz = await Quiz.findOne({ sessionCode });
         if (!quiz) return;
-
         if (questionIndex < quiz.questions.length) {
           socket.emit('nextQuestion', {
             questionIndex,
@@ -187,22 +202,16 @@ module.exports = (io) => {
       }
     });
 
-    
+    // ─── STUDENT finishes quiz ─────────────────────────────────────────────
     socket.on('finishQuiz', async ({ sessionCode }) => {
       try {
         const data = socket.data;
-
-        if (!data || !data.participantName) {
-          console.error('No participant data found');
-          return socket.emit('error', 'Session data not found');
-        }
+        if (!data || !data.participantName) return socket.emit('error', 'Session data not found');
 
         const finalCorrect = data.answers.filter(a => a.result === 'Correct').length;
         const finalIncorrect = data.answers.filter(a => a.result === 'Incorrect').length;
         const finalNotAttempted = data.answers.filter(a => a.result === 'Not Attempted').length;
-
-        const percentage = data.totalQuestions > 0 ?
-          Math.round((finalCorrect / data.totalQuestions) * 100) : 0;
+        const percentage = data.totalQuestions > 0 ? Math.round((finalCorrect / data.totalQuestions) * 100) : 0;
 
         let grade = 'F';
         if (percentage >= 90) grade = 'A+';
@@ -213,7 +222,7 @@ module.exports = (io) => {
 
         const results = {
           participantName: data.participantName,
-          sessionCode: sessionCode,
+          sessionCode,
           totalScore: data.score,
           maxPossibleScore: data.totalQuestions,
           correctCount: finalCorrect,
@@ -221,14 +230,22 @@ module.exports = (io) => {
           notAttemptedCount: finalNotAttempted,
           totalQuestions: data.totalQuestions,
           accuracyPercentage: percentage,
-          grade: grade,
+          grade,
           detailedAnswers: data.answers
         };
 
         await new Result(results).save();
-        socket.emit('quizResults', results);
 
-      
+        // Final leaderboard
+        const finalLeaderboard = getSortedLeaderboard(sessionCode);
+
+        // Send results + leaderboard to student
+        socket.emit('quizResults', { ...results, leaderboard: finalLeaderboard });
+
+        // Broadcast final leaderboard to everyone in room (teacher sees it too)
+        io.to(sessionCode).emit('finalLeaderboard', { leaderboard: finalLeaderboard });
+
+        // Cleanup lobby
         if (lobbies[sessionCode]) {
           lobbies[sessionCode].students = lobbies[sessionCode].students.filter(s => s.id !== socket.id);
         }
@@ -239,17 +256,15 @@ module.exports = (io) => {
       }
     });
 
-   
+    // ─── Disconnect ────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);
-
-    
       for (const code in lobbies) {
         lobbies[code].students = lobbies[code].students.filter(s => s.id !== socket.id);
-        
-        io.to(code).emit('lobbyUpdate', {
-          students: lobbies[code].students.map(s => s.name)
-        });
+        io.to(code).emit('lobbyUpdate', { students: lobbies[code].students.map(s => s.name) });
+      }
+      for (const code in liveScores) {
+        delete liveScores[code][socket.id];
       }
     });
   });
