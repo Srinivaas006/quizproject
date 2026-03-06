@@ -8,7 +8,7 @@ import QuizSession from './components/QuizSession';
 import Results from './components/Results';
 import Lobby from './components/Lobby';
 import Leaderboard from './components/Leaderboard';
-import TeacherLeaderboard from './components/TeacherLeaderboard';
+import TeacherLeaderboard from './components/TLeaderboard';
 import { AuthContext } from './contexts/AuthContext';
 import './GlobalStyles.css';
 
@@ -58,8 +58,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/create" element={<Private><CreateQuiz /></Private>} />
           <Route path="/lobby/:code" element={<Private><Lobby /></Private>} />
-          <Route path="/teacher-leaderboard" element={<Private><TeacherLeaderboard /></Private>} />
-          <Route path="/join" element={<JoinQuiz />} />
+<Route path="/teacher-leaderboard" element={<Private><TeacherLeaderboard /></Private>} />          <Route path="/join" element={<JoinQuiz />} />
           <Route path="/quiz/:code" element={<QuizSession />} />
           <Route path="/results" element={<Results />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
