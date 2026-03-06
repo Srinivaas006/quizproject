@@ -1,8 +1,7 @@
 import React, { useState, useContext, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { createQuiz } from '../api';
-import React, { useState, useContext, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; // ADD THIS
 
 export default function CreateQuiz() {
   const [title, setTitle] = useState('');
