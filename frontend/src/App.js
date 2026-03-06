@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
-import Register from './components/Register'; // New import
+import Register from './components/Register';
 import CreateQuiz from './components/CreateQuiz';
 import JoinQuiz from './components/JoinQuiz';
 import QuizSession from './components/QuizSession';
 import Results from './components/Results';
+import Lobby from './components/Lobby';
 import { AuthContext } from './contexts/AuthContext';
 import './GlobalStyles.css';
 
@@ -33,7 +34,6 @@ export const ThemeProvider = ({ children }) => {
 
 const ThemeToggle = () => {
   const { isDarkMode, toggleTheme } = useContext(ThemeContext);
-  
   return (
     <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
       {isDarkMode ? '☀️' : '🌙'}
@@ -53,8 +53,9 @@ function App() {
         <ThemeToggle />
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} /> {}
+          <Route path="/register" element={<Register />} />
           <Route path="/create" element={<Private><CreateQuiz /></Private>} />
+          <Route path="/lobby/:code" element={<Private><Lobby /></Private>} />
           <Route path="/join" element={<JoinQuiz />} />
           <Route path="/quiz/:code" element={<QuizSession />} />
           <Route path="/results" element={<Results />} />

@@ -1,7 +1,8 @@
 import React, { useState, useContext, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { createQuiz } from '../api';
-
+import React, { useState, useContext, useRef } from 'react';
+import { useNavigate } from 'react-router-dom'; // ADD THIS
 
 export default function CreateQuiz() {
   const [title, setTitle] = useState('');
@@ -10,6 +11,7 @@ export default function CreateQuiz() {
     { text: '', options: ['', ''], correctIndex: 0 }
   ]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // ADD THIS
   const [sessionCode, setSessionCode] = useState('');
   const [copied, setCopied] = useState(false);
   const { token } = useContext(AuthContext);
@@ -125,7 +127,7 @@ export default function CreateQuiz() {
         timePerQuestion
       }, token);
 
-      setSessionCode(data.sessionCode);
+      navigate(`/lobby/${data.sessionCode}`, { state: { sessionCode: data.sessionCode } });
     } catch (error) {
       alert('Failed to create quiz. Please try again.');
       console.error('Create quiz error:', error);
