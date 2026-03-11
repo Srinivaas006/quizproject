@@ -26,7 +26,10 @@ export default function QuizSession() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [liveLeaderboard, setLiveLeaderboard] = useState([]);
 
-  const studentName = location.state?.name || 'Unknown Student';
+  const studentName = location.state?.name || 'Unknown Student'
+  const studentRollNo = location.state?.rollNo || ''
+  const studentDept = location.state?.dept || ''
+  const studentYear = location.state?.year || ''
 
   useEffect(() => {
     if (!studentName || studentName === 'Unknown Student') {
@@ -34,7 +37,7 @@ export default function QuizSession() {
       return;
     }
 
-    socket.emit("joinQuiz", { sessionCode: code, name: studentName });
+    socket.emit("joinQuiz", { sessionCode: code, name: studentName, rollNo: studentRollNo, dept: studentDept, year: studentYear });
 
     socket.on("waitingForTeacher", ({ students }) => {
       setWaiting(true);
