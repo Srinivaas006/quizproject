@@ -222,9 +222,7 @@ module.exports = (io) => {
         lobbies[code].students = lobbies[code].students.filter(s => s.id !== socket.id)
         io.to(code).emit('lobbyUpdate', { students: lobbies[code].students.map(s => s.name) })
       }
-      for (const code in liveScores) {
-        delete liveScores[code][socket.id]
-      }
+      // not removing from liveScores so finished students stay on leaderboard
     })
   })
 }
