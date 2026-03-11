@@ -68,13 +68,16 @@ module.exports = (io) => {
         if (!lobbies[sessionCode]) lobbies[sessionCode] = { teacherSocketId: null, students: [] }
         if (!liveScores[sessionCode]) liveScores[sessionCode] = {}
 
-        liveScores[sessionCode][socket.id] = {
-          name: name.trim(),
-          rollNo: rollNo || '',
-          dept: dept || '',
-          score: 0,
-          correct: 0,
-          incorrect: 0
+        // FIX: Only add to liveScores if not already there (prevents overwriting existing students)
+        if (!liveScores[sessionCode][socket.id]) {
+          liveScores[sessionCode][socket.id] = {
+            name: name.trim(),
+            rollNo: rollNo || '',
+            dept: dept || '',
+            score: 0,
+            correct: 0,
+            incorrect: 0
+          }
         }
 
         if (!lobbies[sessionCode].students.find(s => s.id === socket.id)) {
@@ -119,33 +122,39 @@ module.exports = (io) => {
         socket.data.processedQuestions.push(questionIndex)
 
         const correctIndex = question.correctIndex
-        let points = 0
         let result = ''
 
         if (selectedIndex === null || selectedIndex === undefined) {
-          points = 0; result = 'Not Attempted'; socket.data.notAttempted++
+          result = 'Not Attempted'
+          socket.data.notAttempted++
         } else if (selectedIndex === correctIndex) {
-          points = 1; result = 'Correct'; socket.data.correct++
+          result = 'Correct'
+          socket.data.correct++
         } else {
-          points = -1; result = 'Incorrect'; socket.data.incorrect++
+          result = 'Incorrect'
+          socket.data.incorrect++
         }
 
-        socket.data.score += points
+        // FIX: score = number of correct answers only, no negative marking
+        socket.data.score = socket.data.correct
+
         socket.data.answers.push({
           questionNumber: questionIndex + 1,
           question: question.text,
-          yourAnswer: selectedIndex !== null ? question.options[selectedIndex] : 'Not Attempted',
+          yourAnswer: selectedIndex !== null && selectedIndex !== undefined ? question.options[selectedIndex] : 'Not Attempted',
           correctAnswer: question.options[correctIndex],
-          result, points,
+          result,
           totalScore: socket.data.score
         })
 
+        // FIX: update liveScores for ALL students, not just current
         if (liveScores[sessionCode] && liveScores[sessionCode][socket.id]) {
           liveScores[sessionCode][socket.id].score = socket.data.score
           liveScores[sessionCode][socket.id].correct = socket.data.correct
           liveScores[sessionCode][socket.id].incorrect = socket.data.incorrect
         }
 
+        // Broadcast updated leaderboard with ALL students to teacher
         const lb = getSortedLeaderboard(sessionCode)
         io.to(sessionCode).emit('liveLeaderboard', { leaderboard: lb, questionIndex })
 
@@ -157,16 +166,6 @@ module.exports = (io) => {
       }
     })
 
-    socket.on('nextQuestion', async ({ sessionCode, questionIndex }) => {
-      try {
-        const quiz = await Quiz.findOne({ sessionCode })
-        if (!quiz) return
-        if (questionIndex < quiz.questions.length) {
-          socket.emit('nextQuestion', { questionIndex, text: quiz.questions[questionIndex].text, options: quiz.questions[questionIndex].options })
-        }
-      } catch (err) { console.log(err) }
-    })
-
     socket.on('finishQuiz', async ({ sessionCode }) => {
       try {
         const data = socket.data
@@ -175,6 +174,8 @@ module.exports = (io) => {
         const finalCorrect = data.answers.filter(a => a.result === 'Correct').length
         const finalIncorrect = data.answers.filter(a => a.result === 'Incorrect').length
         const finalNotAttempted = data.answers.filter(a => a.result === 'Not Attempted').length
+        // score = correct count
+        const finalScore = finalCorrect
         const percentage = data.totalQuestions > 0 ? Math.round(finalCorrect / data.totalQuestions * 100) : 0
 
         let grade = 'F'
@@ -190,7 +191,7 @@ module.exports = (io) => {
           dept: data.dept,
           year: data.year,
           sessionCode,
-          totalScore: data.score,
+          totalScore: finalScore,
           maxPossibleScore: data.totalQuestions,
           correctCount: finalCorrect,
           incorrectCount: finalIncorrect,
