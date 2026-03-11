@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
-const QuizSchema = new mongoose.Schema({
+const quizSchema = new mongoose.Schema({
   title: String,
   timePerQuestion: Number,
   questions: [{
@@ -10,6 +10,6 @@ const QuizSchema = new mongoose.Schema({
   }],
   sessionCode: { type: String, unique: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-});
+})
 
-module.exports = mongoose.model('Quiz', QuizSchema);
+module.exports = mongoose.model('Quiz', quizSchema)
