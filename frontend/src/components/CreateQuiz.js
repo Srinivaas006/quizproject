@@ -1,563 +1,264 @@
-import React, { useState, useContext, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
-import { createQuiz } from '../api';
+import React, { useState, useContext, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../contexts/AuthContext'
+import { createQuiz } from '../api'
+import axios from 'axios'
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
 
 export default function CreateQuiz() {
-  const [title, setTitle] = useState('');
-  const [timePerQuestion, setTimePerQuestion] = useState(15);
-  const [questions, setQuestions] = useState([
-    { text: '', options: ['', ''], correctIndex: 0 }
-  ]);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate(); // ADD THIS
-  const [sessionCode, setSessionCode] = useState('');
-  const [copied, setCopied] = useState(false);
-  const { token } = useContext(AuthContext);
-  const cardRef = useRef(null);
+  const [title, setTitle] = useState('')
+  const [timePerQuestion, setTimePerQuestion] = useState(15)
+  const [questions, setQuestions] = useState([{ text: '', options: ['', ''], correctIndex: 0 }])
+  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState(null)
+  const [sessionCode, setSessionCode] = useState('')
+  const [copied, setCopied] = useState(false)
+  const { token } = useContext(AuthContext)
+  const nav = useNavigate()
+  const fileRef = useRef(null)
+  const codeCardRef = useRef(null)
 
-
-  const addQuestion = () => {
-    setQuestions([
-      ...questions,
-      { text: '', options: ['', ''], correctIndex: 0 }
-    ]);
-  };
-
-
-  const removeQuestion = (index) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter((_, i) => i !== index));
-    }
-  };
-
-
-  const updateQuestion = (index, field, value) => {
-    const updated = [...questions];
-    updated[index][field] = value;
-    setQuestions(updated);
-  };
-
-
-  const updateOption = (qIndex, oIndex, value) => {
-    const updated = [...questions];
-    updated[qIndex].options[oIndex] = value;
-    setQuestions(updated);
-  };
-
-
-  const addOption = (qIndex) => {
-    const updated = [...questions];
-    updated[qIndex].options.push('');
-    setQuestions(updated);
-  };
-
-
-  const removeOption = (qIndex, oIndex) => {
-    const updated = [...questions];
-    if (updated[qIndex].options.length > 2) {
-      updated[qIndex].options.splice(oIndex, 1);
-
-      if (updated[qIndex].correctIndex >= updated[qIndex].options.length) {
-        updated[qIndex].correctIndex = 0;
-      }
-      setQuestions(updated);
-    }
-  };
-
-
-  const copyToClipboard = async () => {
+  // ── File upload ──────────────────────────────────────────────────────────
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    setUploadMsg(null)
+    const form = new FormData()
+    form.append('file', file)
     try {
-      await navigator.clipboard.writeText(sessionCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-
-      const textArea = document.createElement('textarea');
-      textArea.value = sessionCode;
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error('Failed to copy');
+      const { data } = await axios.post(`${API_URL}/quizzes/parse-file`, form, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+      })
+      if (data.questions?.length > 0) {
+        const existing = questions.filter(q => q.text.trim() !== '')
+        setQuestions([...existing, ...data.questions])
+        setUploadMsg({ type: 'success', text: `${data.count} questions imported via ${data.method === 'ai' ? 'AI' : 'Excel'}. Review below before creating.` })
       }
-      document.body.removeChild(textArea);
+    } catch (err) {
+      setUploadMsg({ type: 'error', text: err.response?.data?.error || 'Could not parse file. Try Excel format.' })
     }
-  };
+    setUploading(false)
+    e.target.value = ''
+  }
 
+  // ── Question helpers ─────────────────────────────────────────────────────
+  const addQuestion = () => setQuestions([...questions, { text: '', options: ['', ''], correctIndex: 0 }])
+
+  const removeQuestion = (i) => {
+    if (questions.length > 1) setQuestions(questions.filter((_, idx) => idx !== i))
+  }
+
+  const updateQuestion = (i, field, val) => {
+    const q = [...questions]; q[i][field] = val; setQuestions(q)
+  }
+
+  const updateOption = (qi, oi, val) => {
+    const q = [...questions]; q[qi].options[oi] = val; setQuestions(q)
+  }
+
+  const addOption = (qi) => {
+    const q = [...questions]
+    if (q[qi].options.length < 6) { q[qi].options.push(''); setQuestions(q) }
+  }
+
+  const removeOption = (qi, oi) => {
+    const q = [...questions]
+    if (q[qi].options.length > 2) {
+      q[qi].options.splice(oi, 1)
+      if (q[qi].correctIndex >= q[qi].options.length) q[qi].correctIndex = 0
+      setQuestions(q)
+    }
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────────────
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { data } = await createQuiz({ title, questions, timePerQuestion }, token)
+      nav(`/lobby/${data.sessionCode}`, { state: { sessionCode: data.sessionCode } })
+    } catch {
+      alert('Failed to create quiz. Please try again.')
+    }
+    setLoading(false)
+  }
+
+  const copyCode = async () => {
+    try { await navigator.clipboard.writeText(sessionCode) }
+    catch { const t = document.createElement('textarea'); t.value = sessionCode; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t) }
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-
-    const card = cardRef.current;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = (y - centerY) / 10;
-    const rotateY = (centerX - x) / 10;
-
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
-  };
-
-
+    if (!codeCardRef.current) return
+    const r = codeCardRef.current.getBoundingClientRect()
+    const rx = (e.clientY - r.top - r.height / 2) / 10
+    const ry = (r.width / 2 - (e.clientX - r.left)) / 10
+    codeCardRef.current.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`
+  }
   const handleMouseLeave = () => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
-  };
+    if (codeCardRef.current) codeCardRef.current.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)'
+  }
 
+  const allFilled = questions.every(q => q.text.trim() && q.options.every(o => o.trim()))
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-
-    try {
-      const { data } = await createQuiz({
-        title,
-        questions,
-        timePerQuestion
-      }, token);
-
-      navigate(`/lobby/${data.sessionCode}`, { state: { sessionCode: data.sessionCode } });
-    } catch (error) {
-      alert('Failed to create quiz. Please try again.');
-      console.error('Create quiz error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
+  // ── Quiz created screen ──────────────────────────────────────────────────
   if (sessionCode) {
     return (
-      <div className="container" style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem 1rem'
-      }}>
-        <div className="card fade-in" style={{
-          maxWidth: '450px',
-          width: '100%',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            fontSize: '3rem',
-            marginBottom: '1rem'
-          }}>
-            🎉
+      <div className="page-center">
+        <div className="page-inner-sm fade-in" style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-1)', marginBottom: '0.375rem' }}>Quiz Created</h1>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>Share this code with your students</p>
           </div>
 
-          <h1 style={{
-            color: 'var(--primary-blue)',
-            marginBottom: '1rem',
-            fontSize: '2rem'
-          }}>
-            Quiz Created!
-          </h1>
-
-          <p style={{
-            color: 'var(--text-secondary)',
-            marginBottom: '1.5rem',
-            fontSize: '1rem'
-          }}>
-            Share this code with your students
-          </p>
-
-          { }
-          <div
-            ref={cardRef}
-            onClick={copyToClipboard}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{
-              background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
-              color: 'white',
-              padding: '1rem 1.5rem',
-              borderRadius: 'var(--radius-xl)',
-              marginBottom: '1rem',
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              letterSpacing: '3px',
-              cursor: 'pointer',
-              transition: 'transform 0.1s ease-out',
-              position: 'relative',
-              overflow: 'hidden',
-              transformStyle: 'preserve-3d'
-            }}
-            className="card"
-            title="Click to copy"
-          >
+          <div ref={codeCardRef} onClick={copyCode} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}
+            style={{ background: 'var(--primary)', color: '#fff', padding: '1.25rem 2rem', borderRadius: 'var(--radius-lg)', marginBottom: '0.75rem', fontSize: '2rem', fontWeight: '700', letterSpacing: '6px', cursor: 'pointer', transition: 'transform 0.1s', position: 'relative', transformStyle: 'preserve-3d', display: 'inline-block', minWidth: '220px' }}>
             {sessionCode}
-            {copied && (
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                right: '1rem',
-                transform: 'translateY(-50%)',
-                color: 'rgba(255,255,255,0.9)',
-                fontSize: '0.9rem',
-                fontWeight: 'normal'
-              }}>
-                ✓ Copied!
-              </div>
-            )}
+            {copied && <span style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', fontSize: '0.85rem', fontWeight: '400', opacity: 0.9 }}>Copied!</span>}
           </div>
 
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.85rem',
-            marginBottom: '2rem',
-            opacity: 0.7
-          }}>
-            👆 Click to copy
-          </p>
+          <p style={{ color: 'var(--text-3)', fontSize: '0.78rem', marginBottom: '2rem' }}>Click to copy</p>
 
-          <div style={{
-            display: 'flex',
-            gap: '1rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={() => {
-                setSessionCode('');
-                setTitle('');
-                setQuestions([{ text: '', options: ['', ''], correctIndex: 0 }]);
-                setCopied(false);
-              }}
-              className="btn btn-primary"
-            >
-              Create Another Quiz
-            </button>
-
-            <button
-              onClick={() => window.location.href = '/join'}
-              className="btn btn-primary"
-            >
-              Join This Quiz
-            </button>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => { setSessionCode(''); setTitle(''); setQuestions([{ text: '', options: ['', ''], correctIndex: 0 }]); setCopied(false) }} className="btn btn-primary">Create Another</button>
+            <button onClick={() => window.location.href = '/join'} className="btn btn-secondary">Join This Quiz</button>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-
+  // ── Main form ────────────────────────────────────────────────────────────
   return (
-    <div className="container" style={{
-      minHeight: '100vh',
-      padding: '2rem 1rem'
-    }}>
-      <div className="fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div className="card" style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <h1 style={{
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '0.5rem'
-          }}>
-            Create Quiz
-          </h1>
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '1.1rem',
-            margin: 0
-          }}>
-            Build an engaging quiz for your students
-          </p>
+    <div className="page">
+      <div className="page-inner fade-in">
+
+        {/* Page header */}
+        <div className="page-header">
+          <div className="page-header-left">
+            <h1>Create Quiz</h1>
+            <p>Build a quiz manually or import questions from a file</p>
+          </div>
         </div>
 
+        {/* ── File Import Section ── */}
+        <div className="card-section" style={{ marginBottom: '1.5rem', borderStyle: 'dashed', borderWidth: '2px' }}>
+          <div className="section-label">Import from File</div>
+          <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            Upload an Excel (.xlsx), CSV, or text file. Questions are extracted automatically.
+            Unstructured files are parsed by AI.
+          </p>
+
+          {/* Format hint */}
+          <div style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '0.875rem 1rem', marginBottom: '1rem', fontSize: '0.8rem' }}>
+            <span style={{ fontWeight: '600', color: 'var(--text-1)' }}>Recommended Excel columns: </span>
+            <span style={{ color: 'var(--text-2)', fontFamily: 'monospace' }}>Question | Option A | Option B | Option C | Option D | Answer</span>
+            <br />
+            <span style={{ color: 'var(--text-3)', fontSize: '0.75rem' }}>Leave Option C/D blank for 2–3 option questions. Answer: A/B/C/D or 1/2/3/4</span>
+          </div>
+
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
+          <button type="button" onClick={() => fileRef.current.click()} className="btn btn-secondary" disabled={uploading} style={{ width: '100%' }}>
+            {uploading ? <><span className="loading" style={{ marginRight: '0.5rem' }}></span>Parsing file...</> : 'Choose File to Upload'}
+          </button>
+
+          {uploadMsg && (
+            <div className={`alert alert-${uploadMsg.type === 'success' ? 'success' : 'error'}`} style={{ marginTop: '0.75rem' }}>
+              {uploadMsg.text}
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit}>
-          { }
-          <div className="card" style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              color: 'var(--primary-blue)',
-              marginBottom: '1.5rem'
-            }}>
-              📋 Quiz Settings
-            </h3>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '1.5rem'
-            }}>
-              <div className="form-group">
+          {/* Quiz settings */}
+          <div className="card-section">
+            <div className="section-label">Quiz Settings</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Quiz Title</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Math Quiz Chapter 5"
-                  required
-                  disabled={loading}
-                />
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Data Structures Unit 2" required disabled={loading} />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Time per Question (seconds)</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={timePerQuestion}
-                  onChange={(e) => setTimePerQuestion(Number(e.target.value))}
-                  min="5"
-                  max="300"
-                  required
-                  disabled={loading}
-                />
+                <input type="number" value={timePerQuestion} onChange={e => setTimePerQuestion(Number(e.target.value))} min="5" max="300" required disabled={loading} />
               </div>
             </div>
           </div>
-          <div className="card" style={{ marginBottom: '2rem' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '2rem'
-            }}>
-              <h3 style={{
-                color: 'var(--primary-blue)',
-                margin: 0
-              }}>
-                ❓ Questions ({questions.length})
-              </h3>
-              <button
-                type="button"
-                onClick={addQuestion}
-                className="btn btn-secondary"
-                disabled={loading}
-              >
-                + Add Question
-              </button>
+
+          {/* Questions */}
+          <div className="card-section">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div className="section-label" style={{ margin: 0 }}>Questions ({questions.length})</div>
+              <button type="button" onClick={addQuestion} className="btn btn-secondary" disabled={loading} style={{ fontSize: '0.82rem' }}>+ Add Question</button>
             </div>
 
+            {questions.map((question, qi) => (
+              <div key={qi} className="slide-in" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.25rem', marginBottom: '1rem' }}>
 
-            {questions.map((question, qIndex) => (
-              <div
-                key={qIndex}
-                className="slide-in"
-                style={{
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '1.5rem',
-                  marginBottom: '1.5rem',
-                  position: 'relative'
-                }}
-              >
-                
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '1rem'
-                }}>
-                  <h4 style={{
-                    color: 'var(--primary-blue)',
-                    margin: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <span style={{
-                      backgroundColor: 'var(--primary-blue)',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: '1.5rem',
-                      height: '1.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold'
-                    }}>
-                      {qIndex + 1}
-                    </span>
-                    Question {qIndex + 1}
-                  </h4>
+                {/* Question header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}>{qi + 1}</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Question {qi + 1}</span>
+                  </div>
                   {questions.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeQuestion(qIndex)}
-                      className="btn btn-error"
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                      disabled={loading}
-                    >
-                      🗑️ Remove
-                    </button>
+                    <button type="button" onClick={() => removeQuestion(qi)} className="btn btn-error" style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }} disabled={loading}>Remove</button>
                   )}
                 </div>
 
+                {/* Question text */}
                 <div className="form-group">
-                  <label className="form-label">Question Text</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={question.text}
-                    onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
-                    placeholder="Enter your question here..."
-                    required
-                    disabled={loading}
-                  />
+                  <label className="form-label">Question</label>
+                  <input type="text" value={question.text} onChange={e => updateQuestion(qi, 'text', e.target.value)} placeholder="Enter your question..." required disabled={loading} />
                 </div>
 
-
-                <div className="form-group">
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '1rem'
-                  }}>
-                    <label className="form-label" style={{ margin: 0 }}>
-                      Options ({question.options.length})
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => addOption(qIndex)}
-                      className="btn btn-secondary"
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                      disabled={loading || question.options.length >= 6}
-                    >
-                      + Add Option
-                    </button>
+                {/* Options — dynamically sized */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Options ({question.options.length})</label>
+                    <button type="button" onClick={() => addOption(qi)} className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} disabled={loading || question.options.length >= 6}>+ Option</button>
                   </div>
 
-
-                  {question.options.map((option, oIndex) => (
-                    <div key={oIndex} style={{
-                      display: 'flex',
-                      gap: '1rem',
-                      alignItems: 'center',
-                      marginBottom: '0.75rem',
-                      padding: '0.75rem',
-                      backgroundColor: question.correctIndex === oIndex ?
-                        'rgba(59, 130, 246, 0.1)' : 'var(--background)',
-                      borderRadius: 'var(--radius)',
-                      border: question.correctIndex === oIndex ?
-                        '2px solid var(--primary-blue)' : '1px solid var(--border)',
-                      transition: 'var(--transition)'
-                    }}>
-                      <input
-                        type="radio"
-                        name={`correct-${qIndex}`}
-                        checked={question.correctIndex === oIndex}
-                        onChange={() => updateQuestion(qIndex, 'correctIndex', oIndex)}
-                        disabled={loading}
-                        style={{
-                          accentColor: 'var(--primary-blue)',
-                          transform: 'scale(1.3)'
-                        }}
-                      />
-                      <span style={{
-                        backgroundColor: 'var(--primary-blue)',
-                        color: 'white',
-                        borderRadius: '50%',
-                        width: '1.5rem',
-                        height: '1.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold'
-                      }}>
-                        {String.fromCharCode(65 + oIndex)}
-                      </span>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={option}
-                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                        placeholder={`Option ${String.fromCharCode(65 + oIndex)}`}
-                        required
-                        disabled={loading}
-                        style={{
-                          flex: 1,
-                          border: 'none',
-                          backgroundColor: 'transparent'
-                        }}
-                      />
-                      {question.options.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => removeOption(qIndex, oIndex)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--error)',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            padding: '0.25rem'
-                          }}
-                          disabled={loading}
-                          title="Remove option"
-                        >
-                          ❌
-                        </button>
-                      )}
-                    </div>
-                  ))}
-
-                  <p style={{
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.85rem',
-                    margin: '0.5rem 0 0 0',
-                    fontStyle: 'italic'
-                  }}>
-                    💡 Select the correct answer by clicking the radio button
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {question.options.map((opt, oi) => {
+                      const isCorrect = question.correctIndex === oi
+                      return (
+                        <div key={oi} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', padding: '0.6rem 0.75rem', backgroundColor: isCorrect ? 'var(--primary-light)' : 'var(--surface)', border: `${isCorrect ? '2px' : '1px'} solid ${isCorrect ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--radius)', transition: 'all 0.15s' }}>
+                          <input type="radio" name={`correct-${qi}`} checked={isCorrect} onChange={() => updateQuestion(qi, 'correctIndex', oi)} disabled={loading} style={{ accentColor: 'var(--primary)', flexShrink: 0 }} />
+                          <span style={{ width: '22px', height: '22px', borderRadius: 'var(--radius-sm)', backgroundColor: isCorrect ? 'var(--primary)' : 'var(--surface-hover)', color: isCorrect ? '#fff' : 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}>
+                            {String.fromCharCode(65 + oi)}
+                          </span>
+                          <input type="text" value={opt} onChange={e => updateOption(qi, oi, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + oi)}`} required disabled={loading} style={{ flex: 1, border: 'none !important', backgroundColor: 'transparent !important', padding: '0', boxShadow: 'none !important', fontSize: '0.9rem' }} />
+                          {question.options.length > 2 && (
+                            <button type="button" onClick={() => removeOption(qi, oi)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.85rem', padding: '0.15rem 0.3rem', flexShrink: 0 }} disabled={loading}>✕</button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p style={{ color: 'var(--text-3)', fontSize: '0.75rem', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                    Select the radio button next to the correct answer
                   </p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ textAlign: 'center' }}>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{
-                fontSize: '1.1rem',
-                padding: '1rem 2rem',
-                minWidth: '200px'
-              }}
-              disabled={loading || questions.some(q => !q.text || q.options.some(o => !o))}
-            >
-              {loading ? (
-                <>
-                  <span className="loading" style={{ marginRight: '0.5rem' }}></span>
-                  Creating Quiz...
-                </>
-              ) : (
-                '🚀 Create Quiz'
-              )}
+          {/* Submit */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !allFilled} style={{ minWidth: '180px' }}>
+              {loading ? <><span className="loading" style={{ marginRight: '0.5rem' }}></span>Creating Quiz...</> : 'Create Quiz'}
             </button>
-
-            {questions.some(q => !q.text || q.options.some(o => !o)) && (
-              <p style={{
-                color: 'var(--error)',
-                fontSize: '0.85rem',
-                marginTop: '0.5rem'
-              }}>
-                Please fill in all questions and options
-              </p>
-            )}
+            {!allFilled && <p style={{ color: 'var(--error)', fontSize: '0.82rem', margin: 0 }}>Fill in all questions and options first</p>}
           </div>
+
         </form>
       </div>
     </div>
-  );
+  )
 }
