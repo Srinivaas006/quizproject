@@ -249,8 +249,8 @@ export default function CreateQuiz() {
                         </div>
                       )
                     })}
-                    Select the radio button next to the correct answer
-                  </p>
+                     <p style={{ color: 'var(--text-3)', fontSize: '0.75rem', marginTop: '0.4rem', fontStyle: 'italic' }}>Select the radio button next to the correct answer</p>
+                    </div>
                 </div>
               </div>
             ))}
