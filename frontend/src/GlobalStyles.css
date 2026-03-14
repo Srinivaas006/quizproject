@@ -605,3 +605,22 @@ input:focus, textarea:focus, select:focus {
   box-shadow: none !important;
   outline: none !important;
 }
+
+/* ── Option text input inside create quiz ──────────────────────────────── */
+.option-text-input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.9rem !important;
+  color: var(--text-1) !important;
+  background-color: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+}
+.option-text-input:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.12) !important;
+}

@@ -228,20 +228,27 @@ export default function CreateQuiz() {
                     {question.options.map((opt, oi) => {
                       const isCorrect = question.correctIndex === oi
                       return (
-                        <div key={oi} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', padding: '0.6rem 0.75rem', backgroundColor: isCorrect ? 'var(--primary-light)' : 'var(--surface-2)', border: `${isCorrect ? '2px' : '1px'} solid ${isCorrect ? 'var(--border-focus)' : 'var(--border)'}`, borderRadius: 'var(--radius)', transition: 'all 0.15s' }}>
-                          <input type="radio" name={`correct-${qi}`} checked={isCorrect} onChange={() => updateQuestion(qi, 'correctIndex', oi)} disabled={loading} style={{ accentColor: 'var(--primary)', flexShrink: 0 }} />
-                          <span style={{ width: '22px', height: '22px', borderRadius: 'var(--radius-sm)', backgroundColor: isCorrect ? 'var(--primary)' : 'var(--surface-hover)', color: isCorrect ? '#fff' : 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}>
+                        <div key={oi} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', padding: '0.6rem 0.875rem', backgroundColor: isCorrect ? 'var(--primary-light)' : 'var(--surface)', border: `${isCorrect ? '2px' : '1px'} solid ${isCorrect ? 'var(--border-focus)' : 'var(--border)'}`, borderRadius: 'var(--radius)', marginBottom: '0.5rem' }}>
+                          <input type="radio" name={`correct-${qi}`} checked={isCorrect} onChange={() => updateQuestion(qi, 'correctIndex', oi)} disabled={loading} style={{ accentColor: 'var(--primary)', width: '16px', height: '16px', flexShrink: 0, cursor: 'pointer' }} />
+                          <span style={{ width: '24px', height: '24px', borderRadius: '4px', backgroundColor: isCorrect ? 'var(--primary)' : 'var(--border)', color: isCorrect ? '#fff' : 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}>
                             {String.fromCharCode(65 + oi)}
                           </span>
-                          <input type="text" className="option-row-input" value={opt} onChange={e => updateOption(qi, oi, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + oi)}`} required disabled={loading} />
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={e => updateOption(qi, oi, e.target.value)}
+                            placeholder={`Option ${String.fromCharCode(65 + oi)}`}
+                            required
+                            disabled={loading}
+                            className="option-text-input"
+                            style={{}}
+                          />
                           {question.options.length > 2 && (
-                            <button type="button" onClick={() => removeOption(qi, oi)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.85rem', padding: '0.15rem 0.3rem', flexShrink: 0 }} disabled={loading}>✕</button>
+                            <button type="button" onClick={() => removeOption(qi, oi)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '1rem', padding: '0.1rem 0.3rem', flexShrink: 0 }} disabled={loading}>✕</button>
                           )}
                         </div>
                       )
                     })}
-                  </div>
-                  <p style={{ color: 'var(--text-3)', fontSize: '0.75rem', marginTop: '0.4rem', fontStyle: 'italic' }}>
                     Select the radio button next to the correct answer
                   </p>
                 </div>
