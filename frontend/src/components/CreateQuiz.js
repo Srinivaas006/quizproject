@@ -228,12 +228,12 @@ export default function CreateQuiz() {
                     {question.options.map((opt, oi) => {
                       const isCorrect = question.correctIndex === oi
                       return (
-                        <div key={oi} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', padding: '0.6rem 0.75rem', backgroundColor: isCorrect ? 'var(--primary-light)' : 'var(--surface)', border: `${isCorrect ? '2px' : '1px'} solid ${isCorrect ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 'var(--radius)', transition: 'all 0.15s' }}>
+                        <div key={oi} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', padding: '0.6rem 0.75rem', backgroundColor: isCorrect ? 'var(--primary-light)' : 'var(--surface-2)', border: `${isCorrect ? '2px' : '1px'} solid ${isCorrect ? 'var(--border-focus)' : 'var(--border)'}`, borderRadius: 'var(--radius)', transition: 'all 0.15s' }}>
                           <input type="radio" name={`correct-${qi}`} checked={isCorrect} onChange={() => updateQuestion(qi, 'correctIndex', oi)} disabled={loading} style={{ accentColor: 'var(--primary)', flexShrink: 0 }} />
                           <span style={{ width: '22px', height: '22px', borderRadius: 'var(--radius-sm)', backgroundColor: isCorrect ? 'var(--primary)' : 'var(--surface-hover)', color: isCorrect ? '#fff' : 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}>
                             {String.fromCharCode(65 + oi)}
                           </span>
-                          <input type="text" value={opt} onChange={e => updateOption(qi, oi, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + oi)}`} required disabled={loading} style={{ flex: 1, border: 'none !important', backgroundColor: 'transparent !important', padding: '0', boxShadow: 'none !important', fontSize: '0.9rem' }} />
+                          <input type="text" className="option-row-input" value={opt} onChange={e => updateOption(qi, oi, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + oi)}`} required disabled={loading} />
                           {question.options.length > 2 && (
                             <button type="button" onClick={() => removeOption(qi, oi)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.85rem', padding: '0.15rem 0.3rem', flexShrink: 0 }} disabled={loading}>✕</button>
                           )}
