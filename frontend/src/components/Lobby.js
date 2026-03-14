@@ -1,229 +1,119 @@
-import React, { useEffect, useState } from 'react';
-import io from 'socket.io-client';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import io from 'socket.io-client'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export default function Lobby() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const sessionCode = location.state?.sessionCode;
-  const [socket] = useState(() => io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000'));
-  const [students, setStudents] = useState([]);
-  const [countdown, setCountdown] = useState(null);
-  const [starting, setStarting] = useState(false);
+  const location = useLocation()
+  const nav = useNavigate()
+  const sessionCode = location.state?.sessionCode
+  const [socket] = useState(() => io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000'))
+  const [students, setStudents] = useState([])
+  const [countdown, setCountdown] = useState(null)
+  const [starting, setStarting] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!sessionCode) {
-      navigate('/create');
-      return;
-    }
-
-    // Teacher joins lobby room
-    socket.emit('teacherJoinLobby', { sessionCode });
-
-    // Listen for updated student list
-    socket.on('lobbyUpdate', ({ students: updatedStudents }) => {
-      setStudents(updatedStudents);
-    });
-
-    // Listen for countdown
-    socket.on('countdown', ({ count }) => {
-      setCountdown(count);
-    });
-
-    // When quiz starts, go to teacher leaderboard
-    socket.on('quizStarted', () => {
-      navigate('/teacher-leaderboard', { state: { sessionCode } });
-    });
-
-    return () => socket.disconnect();
-  }, [socket, sessionCode, navigate]);
+    if (!sessionCode) { nav('/create'); return }
+    socket.emit('teacherJoinLobby', { sessionCode })
+    socket.on('lobbyUpdate', ({ students: s }) => setStudents(s))
+    socket.on('countdown', ({ count }) => setCountdown(count))
+    socket.on('quizStarted', () => nav('/teacher-leaderboard', { state: { sessionCode } }))
+    return () => socket.disconnect()
+  }, [socket, sessionCode, nav])
 
   const handleStart = () => {
-    if (students.length === 0) {
-      alert('Wait for at least 1 student to join!');
-      return;
-    }
-    setStarting(true);
-    socket.emit('teacherStartQuiz', { sessionCode });
-  };
+    if (students.length === 0) { alert('Wait for at least 1 student to join'); return }
+    setStarting(true)
+    socket.emit('teacherStartQuiz', { sessionCode })
+  }
+
+  const copyLink = () => {
+    const link = `${window.location.origin}/join?code=${sessionCode}`
+    navigator.clipboard.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+
+  const shareWhatsApp = () => {
+    const link = `${window.location.origin}/join?code=${sessionCode}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Join my quiz! Code: ${sessionCode} or click: ${link}`)}`, '_blank')
+  }
 
   return (
-    <div className="container" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
-      <div className="fade-in" style={{ maxWidth: '700px', margin: '0 auto' }}>
+    <div className="page">
+      <div className="page-inner fade-in" style={{ maxWidth: '660px' }}>
 
         {/* Header */}
-        <div className="card" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '0.5rem'
-          }}>
-            🎓 Waiting Room
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            Share this code with your students
-          </p>
-          <div style={{
-            display: 'inline-block',
-            background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark))',
-            color: 'white',
-            padding: '0.75rem 2rem',
-            borderRadius: 'var(--radius-xl)',
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            letterSpacing: '4px'
-          }}>
-            {sessionCode}
+        <div className="page-header">
+          <div className="page-header-left">
+            <h1>Waiting Room</h1>
+            <p>Share the session code with your students</p>
           </div>
+          <button onClick={() => nav('/create')} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>Back</button>
+        </div>
 
-          {/* Share Buttons */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => {
-                const link = `${window.location.origin}/join?code=${sessionCode}`;
-                navigator.clipboard.writeText(link);
-                alert('Link copied to clipboard!');
-              }}
-              className="btn btn-secondary"
-              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-            >
-              📋 Copy Link
+        {/* Session code card */}
+        <div className="card-section" style={{ textAlign: 'center' }}>
+          <div className="section-label">Session Code</div>
+          <div className="code-badge">{sessionCode}</div>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+            <button onClick={copyLink} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
+              {copied ? 'Copied!' : 'Copy Link'}
             </button>
-            <button
-              onClick={() => {
-                const link = `${window.location.origin}/join?code=${sessionCode}`;
-                const msg = `Join my quiz! Code: ${sessionCode} or click: ${link}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-              }}
-              className="btn btn-primary"
-              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', backgroundColor: '#25D366', borderColor: '#25D366' }}
-            >
-              📱 WhatsApp
+            <button onClick={shareWhatsApp} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
+              Share on WhatsApp
             </button>
-            <button
-              onClick={() => {
-                const link = `${window.location.origin}/join?code=${sessionCode}`;
-                if (navigator.share) {
-                  navigator.share({ title: 'Join My Quiz!', text: `Use code: ${sessionCode}`, url: link });
-                } else {
-                  navigator.clipboard.writeText(link);
-                  alert('Link copied!');
-                }
-              }}
-              className="btn btn-primary"
-              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-            >
-              🔗 Share
+            <button onClick={() => { const l = `${window.location.origin}/join?code=${sessionCode}`; if (navigator.share) navigator.share({ title: 'Join Quiz', text: `Code: ${sessionCode}`, url: l }); else { navigator.clipboard.writeText(l); alert('Link copied!') } }} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
+              Share
             </button>
           </div>
         </div>
 
-        {/* Student List */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ color: 'var(--primary-blue)', margin: 0 }}>
-              👥 Students Joined
-            </h3>
-            <span style={{
-              backgroundColor: 'var(--primary-blue)',
-              color: 'white',
-              borderRadius: '999px',
-              padding: '0.25rem 0.75rem',
-              fontWeight: 'bold',
-              fontSize: '1rem'
-            }}>
-              {students.length}
-            </span>
+        {/* Students joined */}
+        <div className="card-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div className="section-label" style={{ margin: 0 }}>Students Joined</div>
+            <span className="count-badge">{students.length}</span>
           </div>
 
           {students.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-              <div className="loading" style={{ marginBottom: '1rem' }}></div>
-              <p style={{ color: 'var(--text-secondary)' }}>Waiting for students to join...</p>
+            <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-2)' }}>
+              <div className="spinner spinner-lg" style={{ margin: '0 auto 1rem' }}></div>
+              <p style={{ fontSize: '0.875rem' }}>Waiting for students to join...</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.6rem' }}>
               {students.map((name, i) => (
-                <div key={i} className="slide-in" style={{
-                  backgroundColor: 'var(--secondary-blue)',
-                  border: '1px solid var(--primary-blue)',
-                  borderRadius: 'var(--radius)',
-                  padding: '0.75rem 1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <span style={{
-                    backgroundColor: 'var(--primary-blue)',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: '1.8rem',
-                    height: '1.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    flexShrink: 0
-                  }}>
+                <div key={i} className="slide-in" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0.875rem', backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', flexShrink: 0 }}>
                     {name.charAt(0).toUpperCase()}
-                  </span>
-                  <span style={{ fontWeight: '500', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {name}
-                  </span>
+                  </div>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Countdown Display */}
+        {/* Countdown */}
         {countdown !== null && (
-          <div className="card fade-in" style={{
-            textAlign: 'center',
-            marginBottom: '2rem',
-            backgroundColor: 'var(--secondary-blue)',
-            border: '2px solid var(--primary-blue)'
-          }}>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Quiz starting in</p>
-            <div style={{
-              fontSize: '5rem',
-              fontWeight: 'bold',
-              color: 'var(--primary-blue)',
-              lineHeight: 1
-            }}>
-              {countdown}
-            </div>
+          <div className="card-section fade-in" style={{ textAlign: 'center', borderColor: 'var(--primary)' }}>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Quiz starting in</p>
+            <div style={{ fontSize: '5rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1 }}>{countdown}</div>
           </div>
         )}
 
-        {/* Start Button */}
+        {/* Start button */}
         {countdown === null && (
           <div style={{ textAlign: 'center' }}>
-            <button
-              onClick={handleStart}
-              disabled={starting || students.length === 0}
-              className="btn btn-primary"
-              style={{ fontSize: '1.2rem', padding: '1rem 3rem', minWidth: '250px' }}
-            >
-              {starting ? (
-                <><span className="loading" style={{ marginRight: '0.5rem' }}></span>Starting...</>
-              ) : (
-                `🚀 Start Quiz (${students.length} student${students.length !== 1 ? 's' : ''})`
-              )}
+            <button onClick={handleStart} disabled={starting || students.length === 0} className="btn btn-primary btn-lg" style={{ minWidth: '220px' }}>
+              {starting ? <><span className="loading" style={{ marginRight: '0.5rem' }}></span>Starting...</> : `Start Quiz  (${students.length} student${students.length !== 1 ? 's' : ''})`}
             </button>
             {students.length === 0 && (
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                Waiting for at least 1 student to join
-              </p>
+              <p style={{ color: 'var(--text-3)', fontSize: '0.8rem', marginTop: '0.5rem' }}>Waiting for at least 1 student</p>
             )}
           </div>
         )}
 
       </div>
     </div>
-  );
+  )
 }
