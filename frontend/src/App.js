@@ -12,6 +12,7 @@ import TeacherLeaderboard from './components/TLeaderboard'
 import HomePage from './components/HomePage'
 import { AuthContext } from './contexts/AuthContext'
 import './GlobalStyles.css'
+import useKeepAlive from './useKeepAlive'
 
 export const ThemeContext = createContext()
 
@@ -50,6 +51,7 @@ const Private = ({ children }) => {
 }
 
 function App() {
+  useKeepAlive()
   return (
     <ThemeProvider>
       <BrowserRouter>
