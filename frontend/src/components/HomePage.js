@@ -211,7 +211,7 @@ export default function HomePage() {
         .hp-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 2.5rem; }
         .hp-step-num {
           font-family: 'DM Serif Display', serif;
-          font-size: 2.75rem; color: var(--border);
+          font-size: 2.75rem; color: var(--text-3);
           line-height: 1; margin-bottom: 0.75rem; font-weight: 400;
         }
         .hp-step-bar { width: 24px; height: 3px; background: var(--primary); border-radius: 2px; margin-bottom: 0.75rem; }
