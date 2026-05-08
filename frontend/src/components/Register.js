@@ -4,45 +4,22 @@ import { AuthContext } from '../contexts/AuthContext'
 import { register } from '../api'
 import PasswordInput from './PasswordInput'
 
-const DEPT_CODES = { '05': 'CSE', '12': 'IT', '44': 'DS' }
-
-function parseCollegeEmail(email) {
-  const match = email.match(/^(\d{2})a91a(\d{2})([a-z0-9]+)@adityauniversity\.in$/i)
-  if (!match) return null
-  const deptCode = match[2]
-  const dept = DEPT_CODES[deptCode]
-  if (!dept) return null
-  return {
-    year: '20' + match[1],
-    dept,
-    rollNo: match[1].toUpperCase() + 'A91A' + deptCode.toUpperCase() + match[3].toUpperCase()
-  }
-}
-
 export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [emailInfo, setEmailInfo] = useState(null)
   const { setToken } = useContext(AuthContext)
   const nav = useNavigate()
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value)
-    setEmailInfo(parseCollegeEmail(e.target.value))
-  }
-
   const handleRegister = async (e) => {
     e.preventDefault()
-    if (!email.endsWith('@adityauniversity.in')) { alert('Only Aditya University emails allowed'); return }
-    if (!emailInfo) { alert('Invalid college email format'); return }
     if (password !== confirmPassword) { alert('Passwords do not match'); return }
     if (password.length < 6) { alert('Password must be at least 6 characters'); return }
     setLoading(true)
     try {
-      const { data } = await register({ name, email, password, rollNo: emailInfo.rollNo, dept: emailInfo.dept, year: emailInfo.year })
+      const { data } = await register({ name, email, password })
       setToken(data.token)
       nav('/create')
     } catch (err) {
@@ -56,11 +33,8 @@ export default function Register() {
       <div className="page-inner-sm fade-in">
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-3)', marginBottom: '0.5rem' }}>
-            Aditya University
-          </div>
           <h1 className="auth-title">Create Account</h1>
-          <p className="auth-sub">Register with your college email to get started</p>
+          <p className="auth-sub">Register to create and manage quizzes</p>
         </div>
 
         <div className="card-section">
@@ -71,18 +45,8 @@ export default function Register() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">College Email</label>
-              <input type="email" value={email} onChange={handleEmailChange} placeholder="23a91a05g6@adityauniversity.in" required disabled={loading} />
-              {emailInfo && (
-                <div className="alert alert-success" style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
-                  Dept: <strong>{emailInfo.dept}</strong> &nbsp;·&nbsp; Roll No: <strong>{emailInfo.rollNo}</strong> &nbsp;·&nbsp; Batch: <strong>{emailInfo.year}</strong>
-                </div>
-              )}
-              {email && !emailInfo && email.includes('@') && (
-                <div className="alert alert-error" style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
-                  Must be a valid Aditya University email
-                </div>
-              )}
+              <label className="form-label">Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email" required disabled={loading} />
             </div>
 
             <div className="form-group">
