@@ -53,8 +53,9 @@ export default function HomePage() {
 
       {/* ── HERO ── */}
       <div style={{
-        backgroundColor: 'var(--primary)', color: '#fff',
-        padding: '4rem 1.5rem 3.5rem', textAlign: 'center'
+       background: 'linear-gradient(to bottom, var(--primary) 60%, #ffffff)',
+  color: '#fff',
+  padding: '4rem 1.5rem 3.5rem', textAlign: 'center'
       }}>
         <div style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '2px', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
           Official Quiz Platform · Aditya University
@@ -109,8 +110,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
-          Exclusive to @adityauniversity.in accounts
+        <p style={{ fontSize: '0.75rem', color: 'rgba(60,60,60,0.5)' }}>
+  Exclusive to @adityauniversity.in accounts
         </p>
       </div>
 
