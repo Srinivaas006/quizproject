@@ -197,7 +197,7 @@ export default function CreateQuiz() {
               <button type="button" onClick={addQuestion} className="btn btn-secondary" disabled={loading} style={{ fontSize: '0.82rem' }}>+ Add Question</button>
             </div>
 
-            {questions.map((question, qi) => (
+            {questions.map((question, qigit ) => (
               <div key={qi} className="slide-in" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.25rem', marginBottom: '1rem' }}>
 
                 {/* Question header */}

@@ -9,7 +9,7 @@ import Results from './components/Results';
 import Lobby from './components/Lobby';
 import Leaderboard from './components/Leaderboard';
 import TeacherLeaderboard from './components/TLeaderboard';
-import { AuthContext } from './contexts/AuthContext';
+import { AuthContext } from '../contexts/AuthContext';
 import './GlobalStyles.css';
 
 export const ThemeContext = createContext();

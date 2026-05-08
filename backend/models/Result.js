@@ -1,17 +1,10 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-const resultSchema = new mongoose.Schema({
+const ResultSchema = new mongoose.Schema({
   sessionCode: String,
   participantName: String,
-  totalScore: Number,
-  maxPossibleScore: Number,
   correctCount: Number,
-  incorrectCount: Number,
-  notAttemptedCount: Number,
-  totalQuestions: Number,
-  accuracyPercentage: Number,
-  grade: String,
-  detailedAnswers: Array
-})
+  incorrectCount: Number
+});
 
-module.exports = mongoose.model('Result', resultSchema)
+module.exports = mongoose.model('Result', ResultSchema);
