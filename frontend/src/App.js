@@ -59,6 +59,7 @@ function App() {
         <ThemeToggle />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/demo" element={<Demo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/create" element={<Private><CreateQuiz /></Private>} />
