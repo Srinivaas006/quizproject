@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
 const DEMO_STYLES = `
-/* ── Demo Container ─────────────────────────────────────────────────────── */
-.demo-container {
-  min-height: 100vh;
+
   background: var(--bg);
   padding: 2rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1205,6 +1203,17 @@ export default function Demo() {
   return (
     <>
       <style>{DEMO_STYLES}</style>
+      <style>{`
+        :root {
+          --bg: #f8fafc;
+          --surface: #ffffff;
+          --surface-2: #f1f5f9;
+          --text-1: #0f172a;
+          --text-2: #475569;
+          --text-3: #94a3b8;
+          --border: #e2e8f0;
+        }
+      `}</style>
       <div className="animated-bg" />
       <div className="demo-container">
         <nav className="demo-nav">
