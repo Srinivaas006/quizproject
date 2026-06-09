@@ -4,10 +4,14 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   passwordHash: String,
   name: String,
-  rollNo: String,
-  dept: String,
-  year: String,
-  role: { type: String, default: 'admin' }
+  role: { type: String, default: 'admin' },
+  isVerified: { type: Boolean, default: false },
+
+  emailOtp: { type: String, default: null },
+  emailOtpExpiry: { type: Date, default: null },
+
+  resetOtp: { type: String, default: null },
+  resetOtpExpiry: { type: Date, default: null }
 })
 
 module.exports = mongoose.model('User', userSchema)
