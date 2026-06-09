@@ -25,25 +25,58 @@ function generateStudentPDF(results) {
   doc.text(results.grade || '-', 130, 69)
   doc.setFillColor(37, 99, 235); doc.setTextColor(255, 255, 255); doc.setFontSize(9)
   const sY = 86
-  ;[[14,'CORRECT',results.correctCount||0],[60,'INCORRECT',results.incorrectCount||0],[106,'NOT ATTEMPTED',results.notAttemptedCount||0],[152,'ACCURACY',(results.accuracyPercentage||0)+'%']].forEach(([x,l,v])=>{ doc.roundedRect(x,sY,40,14,2,2,'F'); doc.setFont('helvetica','bold'); doc.text(l,x+20,sY+6,{align:'center'}); doc.text(String(v),x+20,sY+12,{align:'center'}) })
-  doc.setTextColor(30,30,30); doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('Detailed Answer Sheet',14,112)
-  const tY=117; doc.setFillColor(37,99,235); doc.setTextColor(255,255,255); doc.setFontSize(8.5); doc.rect(14,tY,W-28,8,'F')
-  doc.text('Q#',18,tY+5.5); doc.text('Question',28,tY+5.5); doc.text('Your Answer',108,tY+5.5); doc.text('Correct Answer',148,tY+5.5); doc.text('Result',182,tY+5.5)
-  let y=tY+8
-  ;(results.detailedAnswers||[]).forEach((a,i)=>{\
-    const rH=10; if(y+rH>280){doc.addPage();y=20}\
-    const bg=a.result==='Correct'?[236,253,245]:a.result==='Incorrect'?[254,242,242]:[248,248,248]\
-    doc.setFillColor(...bg); doc.rect(14,y,W-28,rH,'F'); doc.setDrawColor(200,200,200); doc.rect(14,y,W-28,rH,'S')\
-    doc.setTextColor(30,30,30); doc.setFont('helvetica','normal'); doc.setFontSize(8)\
-    doc.text(String(i+1),18,y+6.5)\
-    doc.text((a.question||'').length>38?(a.question||'').substring(0,36)+'..':a.question||'',28,y+6.5)\
-    doc.text((a.yourAnswer||'').length>18?(a.yourAnswer||'').substring(0,16)+'..':a.yourAnswer||'-',108,y+6.5)\
-    doc.text((a.correctAnswer||'').length>18?(a.correctAnswer||'').substring(0,16)+'..':a.correctAnswer||'-',148,y+6.5)\
-    const rc=a.result==='Correct'?[16,185,129]:a.result==='Incorrect'?[239,68,68]:[107,114,128]\
-    doc.setTextColor(...rc); doc.setFont('helvetica','bold'); doc.text(a.result||'-',182,y+6.5); y+=rH\
+  const statCols = [
+    [14, 'CORRECT', results.correctCount || 0],
+    [60, 'INCORRECT', results.incorrectCount || 0],
+    [106, 'NOT ATTEMPTED', results.notAttemptedCount || 0],
+    [152, 'ACCURACY', (results.accuracyPercentage || 0) + '%']
+  ]
+  statCols.forEach(function(item) {
+    const x = item[0], l = item[1], v = item[2]
+    doc.roundedRect(x, sY, 40, 14, 2, 2, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.text(l, x + 20, sY + 6, { align: 'center' })
+    doc.text(String(v), x + 20, sY + 12, { align: 'center' })
   })
-  for(let p=1;p<=doc.internal.getNumberOfPages();p++){doc.setPage(p);doc.setFontSize(8);doc.setTextColor(150);doc.setFont('helvetica','normal');doc.text('Aditya University — QuizMaster',14,292);doc.text(`Page ${p} of ${doc.internal.getNumberOfPages()}`,W-14,292,{align:'right'})}
-  doc.save(`${results.rollNo||results.participantName}_result.pdf`)
+  doc.setTextColor(30, 30, 30); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
+  doc.text('Detailed Answer Sheet', 14, 112)
+  const tY = 117
+  doc.setFillColor(37, 99, 235); doc.setTextColor(255, 255, 255); doc.setFontSize(8.5)
+  doc.rect(14, tY, W - 28, 8, 'F')
+  doc.text('Q#', 18, tY + 5.5)
+  doc.text('Question', 28, tY + 5.5)
+  doc.text('Your Answer', 108, tY + 5.5)
+  doc.text('Correct Answer', 148, tY + 5.5)
+  doc.text('Result', 182, tY + 5.5)
+  let y = tY + 8;
+  (results.detailedAnswers || []).forEach(function(a, i) {
+    const rH = 10
+    if (y + rH > 280) { doc.addPage(); y = 20 }
+    const bg = a.result === 'Correct' ? [236, 253, 245] : a.result === 'Incorrect' ? [254, 242, 242] : [248, 248, 248]
+    doc.setFillColor(bg[0], bg[1], bg[2])
+    doc.rect(14, y, W - 28, rH, 'F')
+    doc.setDrawColor(200, 200, 200)
+    doc.rect(14, y, W - 28, rH, 'S')
+    doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+    doc.text(String(i + 1), 18, y + 6.5)
+    const qText = (a.question || '').length > 38 ? (a.question || '').substring(0, 36) + '..' : (a.question || '')
+    doc.text(qText, 28, y + 6.5)
+    const yourAns = (a.yourAnswer || '').length > 18 ? (a.yourAnswer || '').substring(0, 16) + '..' : (a.yourAnswer || '-')
+    doc.text(yourAns, 108, y + 6.5)
+    const corrAns = (a.correctAnswer || '').length > 18 ? (a.correctAnswer || '').substring(0, 16) + '..' : (a.correctAnswer || '-')
+    doc.text(corrAns, 148, y + 6.5)
+    const rc = a.result === 'Correct' ? [16, 185, 129] : a.result === 'Incorrect' ? [239, 68, 68] : [107, 114, 128]
+    doc.setTextColor(rc[0], rc[1], rc[2])
+    doc.setFont('helvetica', 'bold')
+    doc.text(a.result || '-', 182, y + 6.5)
+    y += rH
+  })
+  for (let p = 1; p <= doc.internal.getNumberOfPages(); p++) {
+    doc.setPage(p); doc.setFontSize(8); doc.setTextColor(150); doc.setFont('helvetica', 'normal')
+    doc.text('Aditya University — QuizMaster', 14, 292)
+    doc.text('Page ' + p + ' of ' + doc.internal.getNumberOfPages(), W - 14, 292, { align: 'right' })
+  }
+  doc.save((results.rollNo || results.participantName) + '_result.pdf')
 }
 
 function exportXLSX(results) {
