@@ -1,7 +1,7 @@
 {
   "name": "quiz-conductor-server",
   "version": "1.0.0",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "build": "npm rebuild bcrypt --build-from-source"
@@ -11,8 +11,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
     "jsonwebtoken": "^9.0.0",
-    "mongodb": "^6.20.0",
     "mongoose": "^7.0.0",
     "multer": "^2.1.1",
     "node-fetch": "^3.3.2",
