@@ -51,27 +51,73 @@ const Private = ({ children }) => {
   return token ? children : <Navigate to="/login" />
 }
 
+// Error Boundary — catches any JS crash in the component tree
+// Must be a class component (React requirement for error boundaries)
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('ErrorBoundary caught:', error, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', minHeight: '100vh', gap: '16px',
+          fontFamily: 'sans-serif', padding: '2rem', textAlign: 'center'
+        }}>
+          <h2 style={{ fontSize: '1.5rem' }}>Something went wrong</h2>
+          <p style={{ color: '#666', maxWidth: '400px' }}>
+            An unexpected error occurred. Please refresh the page to continue.
+          </p>
+          <button
+            onClick={() => window.location.href = '/'}
+            style={{
+              padding: '10px 24px', borderRadius: '8px', border: 'none',
+              background: '#4f46e5', color: '#fff', cursor: 'pointer', fontSize: '1rem'
+            }}
+          >
+            Go to Home
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 function App() {
   useKeepAlive()
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <ThemeToggle />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/demo" element={<Demo />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/create" element={<Private><CreateQuiz /></Private>} />
-          <Route path="/lobby/:code" element={<Private><Lobby /></Private>} />
-          <Route path="/teacher-leaderboard" element={<Private><TeacherLeaderboard /></Private>} />
-          <Route path="/join" element={<JoinQuiz />} />
-          <Route path="/quiz/:code" element={<QuizSession />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <BrowserRouter>
+          <ThemeToggle />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/demo" element={<Demo />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/create" element={<Private><CreateQuiz /></Private>} />
+            <Route path="/lobby/:code" element={<Private><Lobby /></Private>} />
+            <Route path="/teacher-leaderboard" element={<Private><TeacherLeaderboard /></Private>} />
+            <Route path="/join" element={<JoinQuiz />} />
+            <Route path="/quiz/:code" element={<QuizSession />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
   )
 }
 

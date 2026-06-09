@@ -73,7 +73,6 @@ export default function CreateQuiz() {
     }
   }
 
-  // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -105,7 +104,6 @@ export default function CreateQuiz() {
 
   const allFilled = questions.every(q => q.text.trim() && q.options.every(o => o.trim()))
 
-  // ── Quiz created screen ──────────────────────────────────────────────────
   if (sessionCode) {
     return (
       <div className="page-center">
@@ -131,8 +129,6 @@ export default function CreateQuiz() {
       </div>
     )
   }
-
-  // ── Main form ────────────────────────────────────────────────────────────
   return (
     <div className="page">
       <div className="page-inner fade-in">

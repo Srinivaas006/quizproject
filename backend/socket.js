@@ -67,8 +67,6 @@ module.exports = (io) => {
 
         if (!lobbies[sessionCode]) lobbies[sessionCode] = { teacherSocketId: null, students: [] }
         if (!liveScores[sessionCode]) liveScores[sessionCode] = {}
-
-        // FIX: Only add to liveScores if not already there (prevents overwriting existing students)
         if (!liveScores[sessionCode][socket.id]) {
           liveScores[sessionCode][socket.id] = {
             name: name.trim(),
@@ -134,8 +132,6 @@ module.exports = (io) => {
           result = 'Incorrect'
           socket.data.incorrect++
         }
-
-        // FIX: score = number of correct answers only, no negative marking
         socket.data.score = socket.data.correct
 
         socket.data.answers.push({
@@ -146,15 +142,11 @@ module.exports = (io) => {
           result,
           totalScore: socket.data.score
         })
-
-        // FIX: update liveScores for ALL students, not just current
         if (liveScores[sessionCode] && liveScores[sessionCode][socket.id]) {
           liveScores[sessionCode][socket.id].score = socket.data.score
           liveScores[sessionCode][socket.id].correct = socket.data.correct
           liveScores[sessionCode][socket.id].incorrect = socket.data.incorrect
         }
-
-        // Broadcast updated leaderboard with ALL students to teacher
         const lb = getSortedLeaderboard(sessionCode)
         io.to(sessionCode).emit('liveLeaderboard', { leaderboard: lb, questionIndex })
 
@@ -174,7 +166,6 @@ module.exports = (io) => {
         const finalCorrect = data.answers.filter(a => a.result === 'Correct').length
         const finalIncorrect = data.answers.filter(a => a.result === 'Incorrect').length
         const finalNotAttempted = data.answers.filter(a => a.result === 'Not Attempted').length
-        // score = correct count
         const finalScore = finalCorrect
         const percentage = data.totalQuestions > 0 ? Math.round(finalCorrect / data.totalQuestions * 100) : 0
 
@@ -222,7 +213,6 @@ module.exports = (io) => {
         lobbies[code].students = lobbies[code].students.filter(s => s.id !== socket.id)
         io.to(code).emit('lobbyUpdate', { students: lobbies[code].students.map(s => s.name) })
       }
-      // not removing from liveScores so finished students stay on leaderboard
     })
   })
 }
