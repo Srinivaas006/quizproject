@@ -1,7 +1,7 @@
 # QuizConductor 🎯
 ### Real-Time Multiplayer Quiz Platform with AI-Powered Question Generation
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=for-the-badge)](https://quizproject-5.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=for-the-badge)](https://quizproject-frontend.onrender.com)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green?style=for-the-badge&logo=node.js)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-4.x-black?style=for-the-badge&logo=socket.io)](https://socket.io)
@@ -21,7 +21,7 @@ A standout feature: **upload any PDF, Excel sheet, or text document** and the pl
 
 ## Live Demo
 
-🔗 **[https://quizproject-5.onrender.com](https://quizproject-5.onrender.com)**
+🔗 **[https://quizproject-frontend.onrender.com](https://quizproject-frontend.onrender.com)**
 
 | Role    | Access                                      |
 |---------|---------------------------------------------|
@@ -143,7 +143,7 @@ quizproject/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/yourusername/quizproject.git
+git clone https://github.com/Srinivaas006/quizproject.git
 cd quizproject
 ```
 
@@ -292,10 +292,10 @@ Score = number of correct answers (no negative marking).
 
 ## Author
 
-**[Your Name]**  
-B.Tech CSE — JNTUK (AR23)  
-📧 your.email@example.com  
-🔗 [LinkedIn](https://linkedin.com/in/yourprofile) · [GitHub](https://github.com/yourusername)
+**[ Kundu Srinivas ]**  
+B.Tech CSE — Aditya University (AR23)  
+📧 kundusrinivas006@gmail.com
+🔗 [LinkedIn](www.linkedin.com/in/kundu-srinivas-896bb2337) · [GitHub](https://github.com/Srinivaas006)
 
 ---
 
