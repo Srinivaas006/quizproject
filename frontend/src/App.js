@@ -10,6 +10,7 @@ import Results from './components/Results'
 import Lobby from './components/Lobby'
 import Leaderboard from './components/Leaderboard'
 import TeacherLeaderboard from './components/TLeaderboard'
+import TeacherDashboard from './components/TeacherDashboard'
 import HomePage from './components/HomePage'
 import { AuthContext } from './contexts/AuthContext'
 import './GlobalStyles.css'
@@ -51,43 +52,20 @@ const Private = ({ children }) => {
   return token ? children : <Navigate to="/login" />
 }
 
-// Error Boundary — catches any JS crash in the component tree
-// Must be a class component (React requirement for error boundaries)
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
     this.state = { hasError: false, error: null }
   }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error, info) {
-    console.error('ErrorBoundary caught:', error, info)
-  }
-
+  static getDerivedStateFromError(error) { return { hasError: true, error } }
+  componentDidCatch(error, info) { console.error('ErrorBoundary caught:', error, info) }
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', minHeight: '100vh', gap: '16px',
-          fontFamily: 'sans-serif', padding: '2rem', textAlign: 'center'
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: '16px', fontFamily: 'sans-serif', padding: '2rem', textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.5rem' }}>Something went wrong</h2>
-          <p style={{ color: '#666', maxWidth: '400px' }}>
-            An unexpected error occurred. Please refresh the page to continue.
-          </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            style={{
-              padding: '10px 24px', borderRadius: '8px', border: 'none',
-              background: '#4f46e5', color: '#fff', cursor: 'pointer', fontSize: '1rem'
-            }}
-          >
-            Go to Home
-          </button>
+          <p style={{ color: '#666', maxWidth: '400px' }}>An unexpected error occurred. Please refresh the page to continue.</p>
+          <button onClick={() => window.location.href = '/'} style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontSize: '1rem' }}>Go to Home</button>
         </div>
       )
     }
@@ -108,6 +86,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/create" element={<Private><CreateQuiz /></Private>} />
+            <Route path="/dashboard" element={<Private><TeacherDashboard /></Private>} />
             <Route path="/lobby/:code" element={<Private><Lobby /></Private>} />
             <Route path="/teacher-leaderboard" element={<Private><TeacherLeaderboard /></Private>} />
             <Route path="/join" element={<JoinQuiz />} />

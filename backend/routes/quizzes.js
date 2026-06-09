@@ -160,3 +160,28 @@ router.post('/:code/result', async (req, res) => {
 })
 
 module.exports = router
+// Teacher dashboard — past quizzes with student count and avg score
+router.get('/dashboard/summary', checkAuth, async (req, res) => {
+  try {
+    const quizzes = await Quiz.find({ createdBy: req.user.id }).sort({ _id: -1 }).lean()
+    const enriched = await Promise.all(quizzes.map(async (q) => {
+      const results = await Result.find({ sessionCode: q.sessionCode }).lean()
+      const studentCount = results.length
+      const averageScore = studentCount > 0
+        ? results.reduce((s, r) => s + (r.totalScore || 0), 0) / studentCount
+        : 0
+      return {
+        _id: q._id,
+        title: q.title,
+        sessionCode: q.sessionCode,
+        createdAt: q.createdAt,
+        studentCount,
+        averageScore: Math.round(averageScore * 10) / 10,
+      }
+    }))
+    res.json({ quizzes: enriched })
+  } catch (err) {
+    console.log('dashboard error:', err)
+    res.status(500).json({ error: 'Failed to load dashboard' })
+  }
+})

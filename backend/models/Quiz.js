@@ -9,7 +9,8 @@ const QuizSchema = new mongoose.Schema({
     correctIndex: Number
   }],
   sessionCode: { type: String, unique: true },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Quiz', QuizSchema);

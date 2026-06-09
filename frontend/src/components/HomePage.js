@@ -19,16 +19,22 @@ export default function HomePage() {
     { icon: '🏆', title: 'Live Leaderboard', desc: 'Teacher sees real-time rankings as students answer.' },
     { icon: '📄', title: 'PDF Reports', desc: 'Download class report with roll numbers, marks, and accuracy.' },
     { icon: '✅', title: 'Roll No. Verified', desc: 'Only students with valid Aditya University roll numbers can join.' },
-    { icon: '⏱️', title: 'Independent Timer', desc: "Each student's timer runs independently — no one affects others." },
+    { icon: '⏱️', title: 'Circular Timer', desc: 'Animated countdown per question — auto-submits when time runs out.' },
     { icon: '⚡', title: 'Instant Results', desc: 'Students see their score, grade, and answer review immediately.' },
+    { icon: '🔀', title: 'Randomized Order', desc: 'Each student gets questions in a different order — no copying.' },
+    { icon: '🔥', title: 'Streak Counter', desc: '"🔥 3 in a row!" shown when answering correctly multiple times.' },
+    { icon: '📊', title: 'Quiz Analytics', desc: 'Bar chart of hardest questions, average score, pass/fail ratio.' },
+    { icon: '🎉', title: 'Confetti Finish', desc: 'Victory animation and sound when the quiz ends.' },
+    { icon: '🌙', title: 'Dark / Light Mode', desc: 'Students can toggle their own theme for comfort.' },
+    { icon: '📥', title: 'Excel Export', desc: 'Download student results as .xlsx directly from the results page.' },
   ]
 
   const steps = [
     { n: '01', title: 'Teacher creates quiz', desc: 'Add questions manually or upload an Excel file.' },
     { n: '02', title: 'Share session code', desc: 'Share the 6-digit code via WhatsApp or display in class.' },
-    { n: '03', title: 'Students join', desc: 'Students enter roll number and code to join the room.' },
+    { n: '03', title: 'Students join', desc: 'Students pick an avatar, enter roll number and code to join.' },
     { n: '04', title: 'Quiz runs live', desc: 'Each student answers at their own pace within the time limit.' },
-    { n: '05', title: 'Download report', desc: 'Class report PDF is ready the moment the quiz ends.' },
+    { n: '05', title: 'Download report', desc: 'Class report PDF & Excel ready the moment the quiz ends.' },
   ]
 
   return (
@@ -115,6 +121,47 @@ export default function HomePage() {
         }
         .hp-hero h1 em { font-style: italic; color: var(--primary); }
 
+        /* Glowing Aditya University */
+        .hp-aditya-glow {
+          display: inline-block;
+          color: var(--primary);
+          text-shadow:
+            0 0 8px rgba(37,99,235,0.55),
+            0 0 18px rgba(37,99,235,0.3),
+            0 0 32px rgba(37,99,235,0.15);
+          animation: auGlow 3s ease-in-out infinite;
+          font-style: normal;
+          font-family: 'DM Serif Display', serif;
+          font-weight: 400;
+        }
+        @keyframes auGlow {
+          0%, 100% {
+            text-shadow: 0 0 8px rgba(37,99,235,0.55), 0 0 18px rgba(37,99,235,0.3), 0 0 32px rgba(37,99,235,0.15);
+            opacity: 1;
+          }
+          50% {
+            text-shadow: 0 0 14px rgba(37,99,235,0.75), 0 0 28px rgba(37,99,235,0.45), 0 0 50px rgba(37,99,235,0.2);
+            opacity: 0.92;
+          }
+        }
+
+        [data-theme="dark"] .hp-aditya-glow {
+          color: #60a5fa;
+          text-shadow:
+            0 0 10px rgba(96,165,250,0.7),
+            0 0 24px rgba(96,165,250,0.4),
+            0 0 40px rgba(96,165,250,0.2);
+          animation: auGlowDark 3s ease-in-out infinite;
+        }
+        @keyframes auGlowDark {
+          0%, 100% {
+            text-shadow: 0 0 10px rgba(96,165,250,0.7), 0 0 24px rgba(96,165,250,0.4), 0 0 40px rgba(96,165,250,0.2);
+          }
+          50% {
+            text-shadow: 0 0 18px rgba(96,165,250,0.9), 0 0 40px rgba(96,165,250,0.6), 0 0 70px rgba(96,165,250,0.3);
+          }
+        }
+
         .hp-hero-sub {
           font-size: 1.05rem; color: var(--text-2);
           max-width: 430px; margin: 0 auto 3.5rem;
@@ -169,7 +216,7 @@ export default function HomePage() {
         .hp-divider { height: 1px; background: var(--border); }
         .hp-section { padding: 5rem 2rem; background: var(--bg); }
         .hp-section-alt { background: var(--surface-2); }
-        .hp-section-inner { max-width: 920px; margin: 0 auto; }
+        .hp-section-inner { max-width: 960px; margin: 0 auto; }
 
         .hp-label {
           font-size: 0.68rem; font-weight: 700;
@@ -187,25 +234,26 @@ export default function HomePage() {
         /* FEATURES GRID */
         .hp-feat-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
         }
-        @media (max-width: 700px) { .hp-feat-grid { grid-template-columns: 1fr; } }
-        @media (min-width: 701px) and (max-width: 960px) { .hp-feat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .hp-feat-grid { grid-template-columns: 1fr; } }
+        @media (min-width: 601px) and (max-width: 800px) { .hp-feat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 801px) and (max-width: 1100px) { .hp-feat-grid { grid-template-columns: repeat(3, 1fr); } }
 
         .hp-feat-item {
-          padding: 1.625rem;
+          padding: 1.5rem;
           border-right: 1px solid var(--border);
           border-bottom: 1px solid var(--border);
           background: var(--surface); transition: background 0.15s;
         }
         .hp-feat-item:hover { background: var(--surface-hover); }
-        .hp-feat-item:nth-child(3n) { border-right: none; }
-        .hp-feat-item:nth-last-child(-n+3) { border-bottom: none; }
+        .hp-feat-item:nth-child(4n) { border-right: none; }
+        .hp-feat-item:nth-last-child(-n+4) { border-bottom: none; }
 
         .hp-feat-icon { font-size: 1.2rem; margin-bottom: 0.75rem; display: block; }
         .hp-feat-title { font-size: 0.875rem; font-weight: 600; color: var(--text-1); margin-bottom: 0.35rem; }
-        .hp-feat-desc { font-size: 0.795rem; color: var(--text-2); line-height: 1.65; }
+        .hp-feat-desc { font-size: 0.775rem; color: var(--text-2); line-height: 1.65; }
 
         /* STEPS */
         .hp-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 2.5rem; }
@@ -312,14 +360,14 @@ export default function HomePage() {
         <section className="hp-hero">
           <div className="hp-hero-tag">
             <span className="hp-hero-tag-dot" />
-            Official Quiz Platform · Aditya University
+            Official Quiz Platform · <span className="hp-aditya-glow" style={{ fontSize: '0.68rem', fontFamily: 'DM Sans, sans-serif' }}>Aditya University</span>
           </div>
           <h1>Conduct quizzes<br/>with <em>clarity</em></h1>
-          <p className="hp-hero-sub">
-            A streamlined platform for teachers to create and evaluate quizzes, and for students to participate in real time.
+          <p className="hp-hero-sub" style={{ marginBottom: '0.75rem' }}>
+            Powered by <span className="hp-aditya-glow" style={{ fontSize: '1.05rem' }}>Aditya University</span>'s official quiz platform — built for teachers to create and evaluate quizzes, and for students to participate in real time.
           </p>
 
-          <div className="hp-cards">
+          <div className="hp-cards" style={{ marginTop: '2.5rem' }}>
             <div className="hp-card" onClick={() => nav('/join')}>
               <span className="hp-card-emoji">🎓</span>
               <div className="hp-card-title">I am a Student</div>
@@ -344,11 +392,11 @@ export default function HomePage() {
           <div className="hp-section-inner">
             <div className="hp-label fade-up">Features</div>
             <h2 className="hp-title fade-up delay-1">Everything needed for a smooth quiz</h2>
-            <p className="hp-sub fade-up delay-2">Built specifically for college quiz sessions.</p>
+            <p className="hp-sub fade-up delay-2">Built specifically for <span className="hp-aditya-glow" style={{ fontSize: '0.9rem', fontFamily: 'DM Sans, sans-serif' }}>Aditya University</span> quiz sessions.</p>
 
             <div className="hp-feat-grid">
               {features.map((f, i) => (
-                <div key={i} className={`hp-feat-item fade-up delay-${Math.min(i, 5)}`}>
+                <div key={i} className={`hp-feat-item fade-up delay-${Math.min(i % 4, 5)}`}>
                   <span className="hp-feat-icon">{f.icon}</span>
                   <div className="hp-feat-title">{f.title}</div>
                   <div className="hp-feat-desc">{f.desc}</div>
@@ -382,7 +430,7 @@ export default function HomePage() {
         {/* CTA */}
         <section className="hp-cta">
           <h2>Ready to conduct your next quiz?</h2>
-          <p>Register with your Aditya University email to get started.</p>
+          <p>Register with your <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>Aditya University</span> email to get started.</p>
           <div className="hp-cta-btns">
             <button className="hp-btn-cta-white" onClick={() => nav('/register')}>Register as Teacher</button>
             <button className="hp-btn-cta-outline" onClick={() => nav('/join')}>Join as Student</button>

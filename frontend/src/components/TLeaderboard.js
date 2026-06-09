@@ -45,6 +45,67 @@ function generateTeacherPDF(leaderboard, sessionCode, quizTitle) {
   doc.save(`quiz_report_${sessionCode}.pdf`)
 }
 
+function exportTeacherXLSX(leaderboard, sessionCode) {
+  const load = () => {
+    const XLSX = window.XLSX
+    const rows = [
+      ['Rank', 'Roll No', 'Name', 'Dept', 'Score', 'Correct', 'Incorrect', 'Accuracy'],
+      ...leaderboard.map((s, i) => [i + 1, s.rollNo || '', s.name, s.dept || '', s.score, s.correct, s.incorrect, `${s.accuracy || 0}%`])
+    ]
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Results')
+    XLSX.writeFile(wb, `quiz_results_${sessionCode}.xlsx`)
+  }
+  if (!window.XLSX) {
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+    s.onload = load; document.head.appendChild(s)
+  } else load()
+}
+
+// Analytics bar chart for teacher
+function AnalyticsDashboard({ leaderboard }) {
+  if (!leaderboard || leaderboard.length === 0) return null
+  const total = leaderboard.length
+  const passed = leaderboard.filter(s => (s.accuracy || 0) >= 50).length
+  const failed = total - passed
+  const avgAcc = total > 0 ? Math.round(leaderboard.reduce((s, x) => s + (x.accuracy || 0), 0) / total) : 0
+  const avgScore = total > 0 ? (leaderboard.reduce((s, x) => s + x.score, 0) / total).toFixed(1) : 0
+
+  return (
+    <div className="card-section" style={{ marginBottom: '1.25rem' }}>
+      <div className="section-label">Analytics Dashboard</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--success-bg)', borderRadius: 'var(--radius)', border: '1px solid var(--success)' }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--success)' }}>{passed}</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--success)', textTransform: 'uppercase' }}>Passed</div>
+        </div>
+        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--error-bg)', borderRadius: 'var(--radius)', border: '1px solid var(--error)' }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--error)' }}>{failed}</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--error)', textTransform: 'uppercase' }}>Failed</div>
+        </div>
+        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--primary-light)', borderRadius: 'var(--radius)', border: '1px solid var(--border-focus)' }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary-text)' }}>{avgAcc}%</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--primary-text)', textTransform: 'uppercase' }}>Avg Accuracy</div>
+        </div>
+      </div>
+      {/* Pass/Fail bar */}
+      <div style={{ marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: '4px' }}>Pass / Fail Ratio</div>
+        <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+          <div style={{ width: `${total > 0 ? (passed / total * 100) : 0}%`, background: 'var(--success)', transition: 'width 0.8s ease' }} />
+          <div style={{ flex: 1, background: 'var(--error)' }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-3)', marginTop: '2px' }}>
+          <span>Pass {total > 0 ? Math.round(passed / total * 100) : 0}%</span>
+          <span>Fail {total > 0 ? Math.round(failed / total * 100) : 0}%</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TeacherLeaderboard() {
   const location = useLocation()
   const nav = useNavigate()
@@ -87,9 +148,12 @@ export default function TeacherLeaderboard() {
               {isFinal ? ' · Quiz complete' : ''}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             {isFinal && (
-              <button onClick={handleDownload} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>Download Report</button>
+              <>
+                <button onClick={handleDownload} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>PDF Report</button>
+                <button onClick={() => exportTeacherXLSX(leaderboard, sessionCode)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>Export Excel</button>
+              </>
             )}
             <button onClick={() => nav('/create')} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>New Quiz</button>
           </div>
@@ -102,6 +166,9 @@ export default function TeacherLeaderboard() {
           </div>
         ) : (
           <>
+            {/* Analytics */}
+            {isFinal && <AnalyticsDashboard leaderboard={leaderboard} />}
+
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
               {[
@@ -128,6 +195,7 @@ export default function TeacherLeaderboard() {
               {leaderboard.map((s, i) => {
                 const acc = s.accuracy || 0
                 const accColor = acc >= 70 ? 'var(--success)' : acc >= 50 ? 'var(--warning)' : 'var(--error)'
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
                 return (
                   <div key={i} style={{
                     display: 'grid', gridTemplateColumns: '44px 110px 1fr 60px 56px 56px 68px',
@@ -136,7 +204,9 @@ export default function TeacherLeaderboard() {
                     backgroundColor: i % 2 === 0 ? 'transparent' : 'var(--surface-2)',
                     alignItems: 'center'
                   }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: i < 3 ? '700' : '500', color: i < 3 ? 'var(--primary-text)' : 'var(--text-2)' }}>{i + 1}</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: i < 3 ? '700' : '500', color: i < 3 ? 'var(--primary-text)' : 'var(--text-2)' }}>
+                      {medal || (i + 1)}
+                    </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', fontFamily: 'monospace' }}>{s.rollNo || '—'}</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: i < 3 ? '600' : '400', color: 'var(--text-1)' }}>{s.name}</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--primary-text)', textAlign: 'center' }}>{s.score}</div>

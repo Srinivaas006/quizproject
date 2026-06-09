@@ -124,6 +124,13 @@ export default function JoinQuiz() {
           </form>
         </div>
 
+        {/* Rejoin notice */}
+        {localStorage.getItem('studentInfo') && (
+          <div className="alert alert-info" style={{ marginTop: '0.75rem', fontSize: '0.82rem', textAlign: 'center' }}>
+            💡 Your info was restored — just enter the session code to rejoin
+          </div>
+        )}
+
         <hr className="divider" />
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '0.875rem' }}>Are you a teacher?</p>

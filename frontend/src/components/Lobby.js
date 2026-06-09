@@ -1,6 +1,29 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import io from 'socket.io-client'
 import { useLocation, useNavigate } from 'react-router-dom'
+
+// Ambient tone generator for lobby
+function createAmbientMusic() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const osc1 = ctx.createOscillator()
+    const osc2 = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc1.type = 'sine'; osc1.frequency.value = 220
+    osc2.type = 'sine'; osc2.frequency.value = 330
+    gain.gain.value = 0.05
+    osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination)
+    osc1.start(); osc2.start()
+    // Slowly modulate frequency for ambient feel
+    let t = 0
+    const interval = setInterval(() => {
+      t += 0.02
+      osc1.frequency.value = 220 + Math.sin(t) * 10
+      osc2.frequency.value = 330 + Math.cos(t * 0.7) * 8
+    }, 50)
+    return { stop: () => { clearInterval(interval); try { osc1.stop(); osc2.stop(); ctx.close() } catch {} } }
+  } catch { return null }
+}
 
 export default function Lobby() {
   const location = useLocation()
@@ -11,6 +34,8 @@ export default function Lobby() {
   const [countdown, setCountdown] = useState(null)
   const [starting, setStarting] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [musicOn, setMusicOn] = useState(false)
+  const musicRef = useRef(null)
 
   useEffect(() => {
     if (!sessionCode) { nav('/create'); return }
@@ -18,12 +43,20 @@ export default function Lobby() {
     socket.on('lobbyUpdate', ({ students: s }) => setStudents(s))
     socket.on('countdown', ({ count }) => setCountdown(count))
     socket.on('quizStarted', () => nav('/teacher-leaderboard', { state: { sessionCode } }))
-    return () => socket.disconnect()
+    return () => { socket.disconnect(); musicRef.current?.stop() }
   }, [socket, sessionCode, nav])
+
+  const toggleMusic = () => {
+    if (musicOn) {
+      musicRef.current?.stop(); musicRef.current = null; setMusicOn(false)
+    } else {
+      musicRef.current = createAmbientMusic(); setMusicOn(true)
+    }
+  }
 
   const handleStart = () => {
     if (students.length === 0) { alert('Wait for at least 1 student to join'); return }
-    setStarting(true)
+    musicRef.current?.stop(); setStarting(true)
     socket.emit('teacherStartQuiz', { sessionCode })
   }
 
@@ -47,8 +80,20 @@ export default function Lobby() {
             <h1>Waiting Room</h1>
             <p>Share the session code with your students</p>
           </div>
-          <button onClick={() => nav('/create')} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>Back</button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={toggleMusic} className="btn btn-secondary" style={{ fontSize: '0.82rem' }} title="Toggle ambient music">
+              {musicOn ? '🔇 Mute Music' : '🎵 Play Music'}
+            </button>
+            <button onClick={() => nav('/create')} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>Back</button>
+          </div>
         </div>
+
+        {/* Music status */}
+        {musicOn && (
+          <div className="alert alert-info" style={{ marginBottom: '1rem', fontSize: '0.82rem' }}>
+            🎵 Ambient lobby music is playing — students can hear the vibe when they wait
+          </div>
+        )}
 
         {/* Session code card */}
         <div className="card-section" style={{ textAlign: 'center' }}>
@@ -56,12 +101,16 @@ export default function Lobby() {
           <div className="code-badge">{sessionCode}</div>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
             <button onClick={copyLink} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
-              {copied ? 'Copied!' : 'Copy Link'}
+              {copied ? '✓ Copied!' : 'Copy Link'}
             </button>
             <button onClick={shareWhatsApp} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
               Share on WhatsApp
             </button>
-            <button onClick={() => { const l = `${window.location.origin}/join?code=${sessionCode}`; if (navigator.share) navigator.share({ title: 'Join Quiz', text: `Code: ${sessionCode}`, url: l }); else { navigator.clipboard.writeText(l); alert('Link copied!') } }} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
+            <button onClick={() => {
+              const l = `${window.location.origin}/join?code=${sessionCode}`
+              if (navigator.share) navigator.share({ title: 'Join Quiz', text: `Code: ${sessionCode}`, url: l })
+              else { navigator.clipboard.writeText(l); alert('Link copied!') }
+            }} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
               Share
             </button>
           </div>
