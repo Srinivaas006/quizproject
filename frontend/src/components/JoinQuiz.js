@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const DEPT_CODES = { '05': 'CSE', '12': 'IT', '44': 'DS' }
+const AVATARS = ['🎓','🦁','🐯','🦊','🐺','🦅','🐉','🦋','🌟','⚡','🔥','💎','🚀','🎯','🏆','🎪','🌈','🦄','🐼','🎭']
 
 function parseRollNo(rollNo) {
   const match = rollNo.match(/^(\d{2})A91A(\d{2})([A-Z0-9]+)$/i)
@@ -15,13 +16,30 @@ export default function JoinQuiz() {
   const [name, setName] = useState('')
   const [rollNo, setRollNo] = useState('')
   const [code, setCode] = useState('')
+  const [avatar, setAvatar] = useState('🎓')
   const [loading, setLoading] = useState(false)
   const [rollInfo, setRollInfo] = useState(null)
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme')
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  })
   const nav = useNavigate()
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+  }, [isDark])
 
   useEffect(() => {
     const c = new URLSearchParams(window.location.search).get('code')
     if (c) setCode(c)
+    // Restore saved student info for rejoin
+    try {
+      const saved = JSON.parse(localStorage.getItem('studentInfo') || '{}')
+      if (saved.name) setName(saved.name)
+      if (saved.rollNo) { setRollNo(saved.rollNo); setRollInfo(parseRollNo(saved.rollNo)) }
+      if (saved.avatar) setAvatar(saved.avatar)
+    } catch {}
   }, [])
 
   const handleRollChange = (e) => {
@@ -34,15 +52,24 @@ export default function JoinQuiz() {
     e.preventDefault()
     if (!name.trim() || !code.trim() || !rollNo.trim()) { alert('Please fill all fields'); return }
     if (!rollInfo) { alert('Invalid Roll Number. Example: 23A91A05G6'); return }
+    localStorage.setItem('studentInfo', JSON.stringify({ name: name.trim(), rollNo: rollNo.trim(), avatar }))
     setLoading(true)
     setTimeout(() => {
-      nav(`/quiz/${code.trim()}`, { state: { name: name.trim(), rollNo: rollNo.trim(), dept: rollInfo.dept, year: rollInfo.year } })
+      nav(`/quiz/${code.trim()}`, { state: { name: name.trim(), rollNo: rollNo.trim(), dept: rollInfo.dept, year: rollInfo.year, avatar } })
     }, 400)
   }
 
   return (
     <div className="page-center">
       <div className="page-inner-sm fade-in">
+
+        {/* Theme toggle */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+          <button onClick={() => setIsDark(!isDark)}
+            style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '4px 12px', cursor: 'pointer', fontSize: '1rem' }}>
+            {isDark ? '☀️' : '🌙'}
+          </button>
+        </div>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-3)', marginBottom: '0.5rem' }}>
@@ -54,6 +81,23 @@ export default function JoinQuiz() {
 
         <div className="card-section">
           <form onSubmit={handleJoin}>
+
+            {/* Avatar picker */}
+            <div className="form-group">
+              <label className="form-label">Pick Your Avatar</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                {AVATARS.map(a => (
+                  <button key={a} type="button" onClick={() => setAvatar(a)}
+                    style={{ fontSize: '1.4rem', padding: '4px 6px', borderRadius: '8px', border: avatar === a ? '2px solid var(--primary)' : '2px solid transparent', background: avatar === a ? 'var(--primary-light)' : 'transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
+                    {a}
+                  </button>
+                ))}
+              </div>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: 'var(--text-2)' }}>
+                Playing as: <span style={{ fontSize: '1.3rem' }}>{avatar}</span> <strong>{name || '...'}</strong>
+              </div>
+            </div>
+
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your full name" required disabled={loading} />
@@ -75,13 +119,12 @@ export default function JoinQuiz() {
             </div>
 
             <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
-              {loading ? <><span className="loading" style={{ marginRight: '0.5rem' }}></span>Joining...</> : 'Join Quiz'}
+              {loading ? <><span className="loading" style={{ marginRight: '0.5rem' }}></span>Joining...</> : `${avatar}  Join Quiz`}
             </button>
           </form>
         </div>
 
         <hr className="divider" />
-
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '0.875rem' }}>Are you a teacher?</p>
           <button onClick={() => nav('/login')} className="btn btn-secondary" disabled={loading}>Teacher Login</button>
