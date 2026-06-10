@@ -97,7 +97,7 @@ export default function HomePage() {
         .hp-hero::before {
           content: '';
           position: absolute; inset: 0;
-          background: radial-gradient(ellipse 70% 55% at 50% -5%, rgba(37,99,235,0.07) 0%, transparent 65%);
+          background: radial-gradient(ellipse 70% 55% at 50% -5%, rgba(99,102,241,0.08) 0%, transparent 65%);
           pointer-events: none;
         }
 
@@ -126,9 +126,9 @@ export default function HomePage() {
           display: inline-block;
           color: var(--primary);
           text-shadow:
-            0 0 8px rgba(37,99,235,0.55),
-            0 0 18px rgba(37,99,235,0.3),
-            0 0 32px rgba(37,99,235,0.15);
+            0 0 8px rgba(99,102,241,0.6),
+            0 0 18px rgba(6,182,212,0.35),
+            0 0 32px rgba(168,85,247,0.15);
           animation: auGlow 3s ease-in-out infinite;
           font-style: normal;
           font-family: 'DM Serif Display', serif;
@@ -136,11 +136,11 @@ export default function HomePage() {
         }
         @keyframes auGlow {
           0%, 100% {
-            text-shadow: 0 0 8px rgba(37,99,235,0.55), 0 0 18px rgba(37,99,235,0.3), 0 0 32px rgba(37,99,235,0.15);
+            text-shadow: 0 0 8px rgba(99,102,241,0.6), 0 0 18px rgba(6,182,212,0.35), 0 0 32px rgba(168,85,247,0.15);
             opacity: 1;
           }
           50% {
-            text-shadow: 0 0 14px rgba(37,99,235,0.75), 0 0 28px rgba(37,99,235,0.45), 0 0 50px rgba(37,99,235,0.2);
+            text-shadow: 0 0 14px rgba(99,102,241,0.75), 0 0 28px rgba(6,182,212,0.45), 0 0 50px rgba(37,99,235,0.2);
             opacity: 0.92;
           }
         }

@@ -121,7 +121,7 @@ function launchConfetti() {
   const MAX_FRAMES = mobile ? 180 : 480
   const FADE_START = Math.floor(MAX_FRAMES * 0.72)
 
-  const COLORS = ['#2563eb','#16a34a','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3e635','#fbbf24']
+  const COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3e635','#fbbf24']
   const SHAPES = ['circle','square','triangle','ribbon','star']
 
   const pieces = Array.from({ length: COUNT }, (_, idx) => ({
@@ -278,8 +278,8 @@ export default function Results() {
     <div className="page">
       <style>{`
         @keyframes glowPulse {
-          0%,100% { box-shadow: 0 0 10px rgba(37,99,235,0.25), 0 4px 20px rgba(37,99,235,0.12); }
-          50%      { box-shadow: 0 0 22px rgba(37,99,235,0.45), 0 4px 28px rgba(37,99,235,0.28); }
+          0%,100% { box-shadow: 0 0 10px rgba(99,102,241,0.3), 0 4px 20px rgba(99,102,241,0.15); }
+          50%      { box-shadow: 0 0 22px rgba(99,102,241,0.5), 0 4px 28px rgba(6,182,212,0.3); }
         }
         @keyframes slideUp {
           from { transform: translateY(18px); opacity: 0; }
@@ -292,7 +292,7 @@ export default function Results() {
         .winner-banner { animation: glowPulse 2s ease infinite; }
         .stat-anim     { animation: slideUp 0.45s ease forwards; }
         .grade-tag {
-          background: linear-gradient(135deg, #2563eb, #7c3aed, #2563eb);
+          background: linear-gradient(135deg, #6366f1, #06b6d4, #a855f7, #6366f1);
           background-size: 200% auto;
           animation: shimmerGrade 3s linear infinite;
           -webkit-background-clip: text;

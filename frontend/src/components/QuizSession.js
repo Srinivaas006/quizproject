@@ -18,7 +18,7 @@ function launchConfetti() {
   const COUNT = mobile ? 80 : 180
   const MAX_FRAMES = mobile ? 200 : 420  // shorter on mobile
 
-  const COLORS = ['#2563eb','#16a34a','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3e635','#fbbf24']
+  const COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3e635','#fbbf24']
   const SHAPES = ['circle','square','triangle','ribbon','star']
 
   const pieces = Array.from({ length: COUNT }, (_, idx) => ({
@@ -136,7 +136,7 @@ function CircularTimer({ time, maxTime, color }) {
   const circ = 2 * Math.PI * r
   const pct = maxTime > 0 ? time / maxTime : 0
   const offset = circ * (1 - pct)
-  const glowColor = time <= 5 ? '#ef444488' : time <= 10 ? '#f59e0b88' : '#2563eb44'
+  const glowColor = time <= 5 ? '#ef444488' : time <= 10 ? '#f59e0b88' : '#6366f144'
   return (
     <svg width="80" height="80" style={{ transform: 'rotate(-90deg)', filter: `drop-shadow(0 0 6px ${glowColor})`, flexShrink: 0 }}>
       <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="5" />
