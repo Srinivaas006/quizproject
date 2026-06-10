@@ -1,28 +1,44 @@
-const nodemailer = require('nodemailer')
+const https = require('https')
 
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASS
-  }
-})
-
-async function sendEmail(toEmail, subject, html) {
-  await transporter.sendMail({
-    from: `QuizMaster <${process.env.GMAIL_USER}>`,
-    to: toEmail,
+async function sendEmail(toEmail, toName, subject, html) {
+  const body = JSON.stringify({
+    sender: { name: 'QuizMaster', email: 'ajaybob451@gmail.com' },
+    to: [{ email: toEmail, name: toName }],
     subject,
-    html
+    htmlContent: html
+  })
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.brevo.com',
+      path: '/v3/smtp/email',
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = ''
+      res.on('data', chunk => data += chunk)
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(new Error(`Brevo error ${res.statusCode}: ${data}`))
+      })
+    })
+    req.on('error', reject)
+    req.write(body)
+    req.end()
   })
 }
 
 async function sendRegistrationOtp(toEmail, otp, name) {
-  await sendEmail(toEmail, 'Verify your QuizMaster account', `
+  await sendEmail(toEmail, name, 'Verify your QuizMaster account', `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9f9f9; border-radius: 12px;">
       <h2 style="color: #4f46e5; margin-bottom: 8px;">Welcome, ${name}!</h2>
       <p style="color: #555; font-size: 15px; margin-bottom: 24px;">Use the OTP below to verify your email and complete registration.</p>
@@ -36,7 +52,7 @@ async function sendRegistrationOtp(toEmail, otp, name) {
 }
 
 async function sendPasswordResetOtp(toEmail, otp, name) {
-  await sendEmail(toEmail, 'Your QuizMaster login OTP', `
+  await sendEmail(toEmail, name, 'Your QuizMaster login OTP', `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9f9f9; border-radius: 12px;">
       <h2 style="color: #4f46e5; margin-bottom: 8px;">Hello, ${name}!</h2>
       <p style="color: #555; font-size: 15px; margin-bottom: 24px;">Use the OTP below to log in to your QuizMaster account.</p>
