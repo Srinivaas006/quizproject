@@ -7,8 +7,8 @@ function generateOtp() {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.GMAIL_USER,      // kundusrinivas006@gmail.com
-    pass: process.env.GMAIL_APP_PASS   // 16-char app password
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASS
   }
 })
 
