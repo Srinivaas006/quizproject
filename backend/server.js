@@ -48,6 +48,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quizzes', quizRoutes);
 
 // Global error handler — prevents unhandled crashes from leaking stack traces
+// Global error handler — prevents unhandled crashes from leaking stack traces
+
+// Global error handler — prevents unhandled crashes from leaking stack traces
+
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message)
   res.status(500).json({ error: 'Internal server error' })
