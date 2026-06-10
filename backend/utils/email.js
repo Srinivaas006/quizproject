@@ -1,38 +1,23 @@
-const https = require('https')
+const nodemailer = require('nodemailer')
 
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,      // kundusrinivas006@gmail.com
+    pass: process.env.GMAIL_APP_PASS   // 16-char app password
+  }
+})
+
 async function sendEmail(toEmail, subject, html) {
-  const body = JSON.stringify({
-    from: 'QuizMaster <onboarding@resend.dev>',
-    to: [toEmail],
+  await transporter.sendMail({
+    from: `QuizMaster <${process.env.GMAIL_USER}>`,
+    to: toEmail,
     subject,
     html
-  })
-
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'api.resend.com',
-      path: '/emails',
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body)
-      }
-    }, (res) => {
-      let data = ''
-      res.on('data', chunk => data += chunk)
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) resolve(data)
-        else reject(new Error(`Resend error: ${data}`))
-      })
-    })
-    req.on('error', reject)
-    req.write(body)
-    req.end()
   })
 }
 
