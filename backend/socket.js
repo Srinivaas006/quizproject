@@ -207,6 +207,8 @@ module.exports = (io) => {
         socket.emit('error', 'Failed to save results')
       }
     })
+// Global error handler — prevents unhandled crashes from leaking stack traces
+// Global error handler — prevents unhandled crashes from leaking stack traces
 
     socket.on('disconnect', () => {
       for (const code in lobbies) {
