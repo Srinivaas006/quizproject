@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import io from 'socket.io-client'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
-// Confetti helper
+// ── Epic Confetti Engine ────────────────────────────────────────────────────
 function launchConfetti() {
   const canvas = document.createElement('canvas')
   canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none'
@@ -10,61 +10,114 @@ function launchConfetti() {
   const ctx = canvas.getContext('2d')
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
-  const pieces = Array.from({ length: 120 }, () => ({
+
+  const COLORS = ['#2563eb','#16a34a','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3e635','#fbbf24']
+  const SHAPES = ['circle','square','triangle','ribbon','star']
+
+  const pieces = Array.from({ length: 180 }, (_, idx) => ({
     x: Math.random() * canvas.width,
-    y: -20,
-    r: Math.random() * 8 + 4,
-    d: Math.random() * 80 + 20,
-    color: ['#2563eb','#16a34a','#f59e0b','#ef4444','#8b5cf6','#ec4899'][Math.floor(Math.random()*6)],
-    tilt: Math.random() * 10 - 10,
-    tiltAngle: 0,
-    tiltSpeed: Math.random() * 0.1 + 0.05,
+    y: -20 - Math.random() * 200,
+    r: Math.random() * 9 + 4,
+    shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    glitter: Math.random() > 0.6,
+    vx: (Math.random() - 0.5) * 3,
+    vy: Math.random() * 3 + 1.5,
+    spin: Math.random() * 0.3 - 0.15,
+    angle: Math.random() * Math.PI * 2,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: Math.random() * 0.08 + 0.03,
+    opacity: 1,
+    scaleX: 1,
+    scaleXDir: Math.random() > 0.5 ? 1 : -1,
+    delay: idx * 1.5,
   }))
+
+  function drawStar(ctx, x, y, r) {
+    ctx.beginPath()
+    for (let i = 0; i < 5; i++) {
+      const a1 = (i * 4 * Math.PI) / 5 - Math.PI / 2
+      const a2 = ((i * 4 + 2) * Math.PI) / 5 - Math.PI / 2
+      if (i === 0) ctx.moveTo(x + r * Math.cos(a1), y + r * Math.sin(a1))
+      else ctx.lineTo(x + r * Math.cos(a1), y + r * Math.sin(a1))
+      ctx.lineTo(x + (r * 0.45) * Math.cos(a2), y + (r * 0.45) * Math.sin(a2))
+    }
+    ctx.closePath()
+    ctx.fill()
+  }
+
   let frame = 0
-  const anim = setInterval(() => {
+  const anim = requestAnimationFrame(function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     pieces.forEach(p => {
-      p.tiltAngle += p.tiltSpeed
-      p.y += (Math.cos(p.d + frame / 5) + 2)
-      p.tilt = Math.sin(p.tiltAngle) * 15
-      if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width }
-      ctx.beginPath()
-      ctx.fillStyle = p.color
-      ctx.ellipse(p.x + p.tilt, p.y, p.r, p.r * 0.4, p.tiltAngle, 0, Math.PI * 2)
-      ctx.fill()
+      if (frame < p.delay) return
+      p.wobble += p.wobbleSpeed
+      p.angle += p.spin
+      p.x += p.vx + Math.sin(p.wobble) * 1.2
+      p.y += p.vy
+      p.vy += 0.04
+      p.scaleX += p.scaleXDir * 0.04
+      if (Math.abs(p.scaleX) > 1) p.scaleXDir *= -1
+
+      if (p.y > canvas.height + 20) {
+        if (frame < 350) { p.y = -20; p.x = Math.random() * canvas.width; p.vy = Math.random() * 3 + 1.5 }
+      }
+      if (frame > 280) p.opacity = Math.max(0, p.opacity - 0.008)
+
+      ctx.save()
+      ctx.globalAlpha = p.opacity
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.angle)
+      ctx.scale(p.scaleX, 1)
+      ctx.fillStyle = p.glitter ? `hsl(${(frame * 3 + p.x) % 360}, 90%, 65%)` : p.color
+
+      if (p.shape === 'circle') {
+        ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill()
+      } else if (p.shape === 'square') {
+        ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 1.4)
+      } else if (p.shape === 'triangle') {
+        ctx.beginPath(); ctx.moveTo(0, -p.r); ctx.lineTo(p.r, p.r); ctx.lineTo(-p.r, p.r); ctx.closePath(); ctx.fill()
+      } else if (p.shape === 'ribbon') {
+        ctx.fillRect(-p.r * 0.3, -p.r * 1.5, p.r * 0.6, p.r * 3)
+      } else if (p.shape === 'star') {
+        drawStar(ctx, 0, 0, p.r)
+      }
+      ctx.restore()
     })
     frame++
-    if (frame > 200) { clearInterval(anim); canvas.remove() }
-  }, 16)
+    if (frame < 420) requestAnimationFrame(loop)
+    else canvas.remove()
+  })
 }
 
-// Victory sound
+// ── Victory sound ──────────────────────────────────────────────────────────
 function playVictorySound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
-    const notes = [523, 659, 784, 1047]
+    const notes = [523, 659, 784, 1047, 1318]
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain); gain.connect(ctx.destination)
       osc.frequency.value = freq
       osc.type = 'sine'
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4)
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.5)
       osc.start(ctx.currentTime + i * 0.12)
-      osc.stop(ctx.currentTime + i * 0.12 + 0.5)
+      osc.stop(ctx.currentTime + i * 0.12 + 0.6)
     })
   } catch {}
 }
 
-// Circular timer SVG
+// ── Circular Timer ─────────────────────────────────────────────────────────
 function CircularTimer({ time, maxTime, color }) {
   const r = 36
   const circ = 2 * Math.PI * r
   const pct = maxTime > 0 ? time / maxTime : 0
   const offset = circ * (1 - pct)
+  const glowColor = time <= 5 ? '#ef4444' : time <= 10 ? '#f59e0b' : '#2563eb'
   return (
-    <svg width="90" height="90" style={{ transform: 'rotate(-90deg)' }}>
+    <svg width="90" height="90" style={{ transform: 'rotate(-90deg)', filter: `drop-shadow(0 0 8px ${glowColor}55)` }}>
       <circle cx="45" cy="45" r={r} fill="none" stroke="var(--border)" strokeWidth="6" />
       <circle
         cx="45" cy="45" r={r}
@@ -104,22 +157,17 @@ export default function QuizSession() {
   const [streak, setStreak] = useState(0)
   const [showStreak, setShowStreak] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
-  const [lobbySong, setLobbySong] = useState(null)
 
   const studentName = location.state?.name || ''
   const studentRollNo = location.state?.rollNo || ''
   const studentDept = location.state?.dept || ''
   const studentYear = location.state?.year || ''
   const studentAvatar = location.state?.avatar || '🎓'
-  const isDark = localStorage.getItem('theme') === 'dark'
 
   const qIndexRef = useRef(0)
   const answeredRef = useRef(false)
   const questionsRef = useRef([])
   const streakRef = useRef(0)
-
-  // Lobby ambient music (simple tone loop)
-  const lobbyAudioRef = useRef(null)
 
   useEffect(() => {
     if (!studentName) { nav('/join'); return }
@@ -131,17 +179,23 @@ export default function QuizSession() {
     socket.on('lobbyUpdate', ({ students }) => setWaitingStudents(students))
     socket.on('countdown', ({ count }) => setCountdown(count))
     socket.on('startQuiz', ({ questions: qs, timePerQuestion }) => {
-      // Randomize question order per student
-      const shuffled = [...qs].sort(() => Math.random() - 0.5).map(q => ({
-        ...q,
-        options: [...q.options].map((opt, i) => ({ opt, origIdx: i }))
-          .sort(() => Math.random() - 0.5)
-      }))
-      // Rebuild correctIndex after shuffle
+      // Shuffle questions but preserve the original index for backend comparison
+      const withOrigIdx = qs.map((q, origIdx) => ({ ...q, origIdx }))
+      const shuffled = [...withOrigIdx].sort(() => Math.random() - 0.5)
+
+      // Shuffle options per question but track original option indices
       const final = shuffled.map(q => {
-        const ci = q.options.findIndex(o => o.origIdx === q.correctIndex)
-        return { ...q, options: q.options.map(o => o.opt), correctIndex: ci }
+        const optionsWithIdx = q.options.map((opt, i) => ({ opt, origIdx: i }))
+        const shuffledOpts = [...optionsWithIdx].sort(() => Math.random() - 0.5)
+        const newCorrectIdx = shuffledOpts.findIndex(o => o.origIdx === q.correctIndex)
+        return {
+          ...q,
+          options: shuffledOpts.map(o => o.opt),
+          correctIndex: newCorrectIdx,
+          // origIdx is already on the question from above
+        }
       })
+
       setWaiting(false); setCountdown(null)
       setQuestions(final); questionsRef.current = final
       setMaxTime(timePerQuestion)
@@ -154,7 +208,7 @@ export default function QuizSession() {
       setQuizDone(true)
       launchConfetti()
       playVictorySound()
-      setTimeout(() => nav('/results', { state: data }), 2500)
+      setTimeout(() => nav('/results', { state: data }), 2800)
     })
     socket.on('error', (msg) => { alert(msg); nav('/join') })
     return () => socket.disconnect()
@@ -170,7 +224,14 @@ export default function QuizSession() {
             answeredRef.current = true
             setAnswered(true)
             streakRef.current = 0; setStreak(0)
-            socketRef.current?.emit('answer', { sessionCode: code, questionIndex: qIndexRef.current, selectedIndex: null, name: studentName })
+            const currentQ = questionsRef.current[qIndexRef.current]
+            // Send original question index so backend uses correct question
+            socketRef.current?.emit('answer', {
+              sessionCode: code,
+              questionIndex: currentQ.origIdx,
+              selectedIndex: null,
+              name: studentName
+            })
             goNext(qIndexRef.current)
           }
           return 0
@@ -192,33 +253,38 @@ export default function QuizSession() {
         setQuestion(qs[next]); setTime(maxTime)
         setAnswered(false); answeredRef.current = false; setSelectedOption(null)
       }
-    }, 800)
+    }, 900)
   }
 
   const choose = (idx) => {
     if (answered) return
     setSelectedOption(idx); setAnswered(true); answeredRef.current = true
-    // Check correct to update streak
-    const correct = questionsRef.current[qIndexRef.current]?.correctIndex
+    const currentQ = questionsRef.current[qIndexRef.current]
+    const correct = currentQ?.correctIndex
     if (idx === correct) {
       const ns = streakRef.current + 1
       streakRef.current = ns; setStreak(ns)
-      if (ns >= 2) { setShowStreak(true); setTimeout(() => setShowStreak(false), 1800) }
+      if (ns >= 2) { setShowStreak(true); setTimeout(() => setShowStreak(false), 2200) }
     } else {
       streakRef.current = 0; setStreak(0)
     }
-    socketRef.current?.emit('answer', { sessionCode: code, questionIndex: qIndex, selectedIndex: idx, name: studentName })
-    goNext(qIndex)
+    // Send original question index to backend
+    socketRef.current?.emit('answer', {
+      sessionCode: code,
+      questionIndex: currentQ.origIdx,
+      selectedIndex: idx,
+      name: studentName
+    })
+    goNext(qIndexRef.current)
   }
 
   const progress = questions.length > 0 ? ((qIndex + 1) / questions.length) * 100 : 0
   const timerColor = time <= 5 ? 'var(--error)' : time <= 10 ? 'var(--warning)' : 'var(--primary)'
 
-  // QUIZ DONE animation
   if (quizDone) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', background: 'var(--bg)' }}>
-        <div style={{ fontSize: '4rem' }}>🎉</div>
+        <div style={{ fontSize: '4rem', animation: 'bounceIn 0.6s ease' }}>🎉</div>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-1)' }}>Quiz Complete!</h2>
         <p style={{ color: 'var(--text-2)' }}>Calculating your results…</p>
         <div className="spinner spinner-lg" />
@@ -226,13 +292,10 @@ export default function QuizSession() {
     )
   }
 
-  // WAITING ROOM
   if (waiting) {
     return (
       <div className="page-center">
         <div className="page-inner-sm fade-in">
-
-          {/* Theme toggle */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
             <button
               onClick={() => {
@@ -248,7 +311,7 @@ export default function QuizSession() {
           {countdown !== null ? (
             <div className="card-section" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
               <p style={{ fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', marginBottom: '1rem' }}>Quiz starts in</p>
-              <div style={{ fontSize: '7rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1 }}>{countdown}</div>
+              <div style={{ fontSize: '7rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1, textShadow: '0 0 30px var(--primary)' }}>{countdown}</div>
               <p style={{ color: 'var(--text-2)', marginTop: '1.5rem', fontSize: '0.9rem' }}>{studentAvatar} {studentName}</p>
             </div>
           ) : (
@@ -263,7 +326,6 @@ export default function QuizSession() {
                 {studentRollNo && <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginBottom: '1.25rem' }}>{studentRollNo} · {studentDept}</p>}
                 <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '1rem' }}>Waiting for teacher to start</p>
                 <div className="spinner" style={{ margin: '0 auto' }}></div>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: '0.75rem' }}>🎵 Ambient vibes playing…</p>
               </div>
 
               <div className="card-section">
@@ -288,47 +350,85 @@ export default function QuizSession() {
 
   if (!question) return null
 
-  // QUIZ
   return (
     <div className="page">
+      <style>{`
+        @keyframes streakPop {
+          0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+          30% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+          80% { transform: translateX(-50%) scale(1); opacity: 1; }
+          100% { transform: translateX(-50%) scale(0.9); opacity: 0; }
+        }
+        @keyframes fireGlow {
+          0%, 100% { text-shadow: 0 0 8px #f97316, 0 0 20px #ef4444; }
+          50% { text-shadow: 0 0 16px #f59e0b, 0 0 40px #f97316; }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { box-shadow: 0 0 10px #f97316aa, 0 0 30px #ef444455; }
+          50% { box-shadow: 0 0 20px #f97316, 0 0 50px #f9731688; }
+        }
+        @keyframes bounceIn {
+          0% { transform: scale(0); }
+          60% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        .streak-pill {
+          animation: streakPop 2s ease forwards;
+        }
+        .streak-fire {
+          animation: fireGlow 0.8s ease infinite;
+        }
+        .streak-badge {
+          animation: pulseGlow 0.8s ease infinite;
+        }
+      `}</style>
+
       <div className="page-inner fade-in" style={{ maxWidth: '660px', position: 'relative' }}>
 
         {/* Streak banner */}
         {showStreak && streak >= 2 && (
-          <div style={{
-            position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
-            background: 'var(--warning)', color: '#fff', fontWeight: 700,
-            padding: '0.6rem 1.5rem', borderRadius: '100px', fontSize: '1rem',
-            zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            animation: 'fadeIn 0.3s ease'
+          <div className="streak-pill" style={{
+            position: 'fixed', top: '1.2rem', left: '50%',
+            background: 'linear-gradient(135deg, #f97316, #ef4444)',
+            color: '#fff', fontWeight: 800,
+            padding: '0.65rem 1.75rem', borderRadius: '100px', fontSize: '1.05rem',
+            zIndex: 9999,
+            letterSpacing: '0.5px',
           }}>
-            🔥 {streak} in a row!
+            <span className="streak-fire">🔥</span> {streak} in a row!
+            {streak >= 5 && <span style={{ marginLeft: '8px' }}>⚡</span>}
           </div>
         )}
 
         {/* Top bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.875rem' }}>
-          <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.875rem', gap: '0.5rem' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)' }}>
               Question {qIndex + 1} of {questions.length}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginTop: '2px' }}>{studentAvatar} {studentName}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{studentAvatar} {studentName}</div>
             {streak >= 2 && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: 600, marginTop: '2px' }}>🔥 {streak} streak!</div>
+              <div className="streak-badge" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                fontSize: '0.75rem', color: '#fff', fontWeight: 700, marginTop: '4px',
+                background: 'linear-gradient(135deg, #f97316, #ef4444)',
+                padding: '2px 10px', borderRadius: '100px',
+              }}>
+                <span className="streak-fire">🔥</span> {streak} streak!
+              </div>
             )}
           </div>
-          {/* Circular timer */}
           <CircularTimer time={time} maxTime={maxTime} color={timerColor} />
         </div>
 
         {/* Progress */}
-        <div className="progress-track">
+        <div className="progress-track" style={{ marginBottom: '1rem' }}>
           <div className="progress-fill" style={{ width: `${progress}%` }}></div>
         </div>
 
         {/* Question */}
-        <div className="card-section" style={{ marginBottom: '1.25rem', padding: '1.75rem' }}>
-          <p style={{ fontSize: '1.1rem', lineHeight: '1.7', margin: 0, fontWeight: '500', color: 'var(--text-1)' }}>
+        <div className="card-section" style={{ marginBottom: '1.25rem', padding: '1.5rem' }}>
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.7', margin: 0, fontWeight: '500', color: 'var(--text-1)' }}>
             {question.text}
           </p>
         </div>
@@ -340,10 +440,10 @@ export default function QuizSession() {
             return (
               <button key={i} onClick={() => choose(i)} disabled={answered}
                 className={`option-btn${isSelected ? ' selected' : ''}`}
-                style={{ opacity: answered && !isSelected ? 0.4 : 1 }}
+                style={{ opacity: answered && !isSelected ? 0.4 : 1, textAlign: 'left' }}
               >
                 <span className="option-label">{String.fromCharCode(65 + i)}</span>
-                <span style={{ color: 'var(--text-1)' }}>{opt}</span>
+                <span style={{ color: 'var(--text-1)', wordBreak: 'break-word' }}>{opt}</span>
               </button>
             )
           })}
@@ -351,7 +451,7 @@ export default function QuizSession() {
 
         {answered && (
           <p style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>
-            Answer recorded — next question loading
+            Answer recorded — next question loading…
           </p>
         )}
 

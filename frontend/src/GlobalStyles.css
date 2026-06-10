@@ -624,3 +624,158 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--border-focus) !important;
   box-shadow: 0 0 0 2px rgba(37,99,235,0.12) !important;
 }
+/* ── ENHANCED MOBILE RESPONSIVENESS ────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root {
+    --max-w: 100%;
+    --max-w-sm: 100%;
+  }
+
+  .page {
+    padding: 1rem 0.75rem 3rem;
+  }
+
+  .page-center {
+    padding: 1rem 0.75rem;
+    align-items: flex-start;
+  }
+
+  .page-inner, .page-inner-sm {
+    padding: 0;
+  }
+
+  /* Header */
+  .page-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .page-header-left h1 {
+    font-size: 1.25rem;
+  }
+
+  /* Cards */
+  .card, .card-section {
+    padding: 1rem;
+    border-radius: var(--radius);
+  }
+
+  /* Stats grid — 2 col on small screens */
+  .stats-grid-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .stat-box .stat-val {
+    font-size: 1.25rem;
+  }
+
+  /* Option buttons */
+  .option-btn {
+    padding: 0.75rem 0.875rem !important;
+    font-size: 0.9rem !important;
+    gap: 0.625rem !important;
+  }
+
+  .option-label {
+    width: 1.6rem !important;
+    height: 1.6rem !important;
+    font-size: 0.75rem !important;
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Auth forms */
+  .auth-title {
+    font-size: 1.35rem;
+  }
+
+  /* Tags & badges wrap */
+  .tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  /* Circular timer */
+  svg[width="90"] {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  /* Quiz session top bar fix */
+  .quiz-topbar {
+    gap: 0.375rem;
+  }
+
+  /* Table horizontal scroll */
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Action buttons wrap vertically on very small */
+  .action-row {
+    flex-direction: column;
+  }
+  .action-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .stats-grid-3 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .stat-box {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .page {
+    padding: 0.75rem 0.5rem 3rem;
+  }
+}
+
+/* Results action row — make it wrap-friendly */
+.results-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 400px) {
+  .results-actions .btn {
+    flex: 1 1 calc(50% - 0.375rem);
+    min-width: 0;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ── Enhanced streak glow ───────────────────────────────────────────────── */
+@keyframes streakGlow {
+  0%, 100% { box-shadow: 0 0 8px #f97316aa, 0 0 20px #ef444455; }
+  50% { box-shadow: 0 0 16px #f97316, 0 0 40px #f9731688; }
+}
+
+/* ── Progress bar glow ──────────────────────────────────────────────────── */
+.progress-fill {
+  background: linear-gradient(90deg, var(--primary), #7c3aed);
+  transition: width 0.5s ease;
+}
+
+.progress-track {
+  width: 100%;
+  height: 5px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
