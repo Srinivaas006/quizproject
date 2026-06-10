@@ -2,7 +2,10 @@ import React, { useEffect, useState, useRef } from 'react'
 import io from 'socket.io-client'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
-// ── Epic Confetti Engine ────────────────────────────────────────────────────
+// ── Detect mobile ──────────────────────────────────────────────────────────
+const isMobile = () => window.innerWidth <= 640
+
+// ── Epic Confetti Engine ───────────────────────────────────────────────────
 function launchConfetti() {
   const canvas = document.createElement('canvas')
   canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none'
@@ -11,10 +14,14 @@ function launchConfetti() {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
 
+  const mobile = isMobile()
+  const COUNT = mobile ? 80 : 180
+  const MAX_FRAMES = mobile ? 200 : 420  // shorter on mobile
+
   const COLORS = ['#2563eb','#16a34a','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3e635','#fbbf24']
   const SHAPES = ['circle','square','triangle','ribbon','star']
 
-  const pieces = Array.from({ length: 180 }, (_, idx) => ({
+  const pieces = Array.from({ length: COUNT }, (_, idx) => ({
     x: Math.random() * canvas.width,
     y: -20 - Math.random() * 200,
     r: Math.random() * 9 + 4,
@@ -30,7 +37,7 @@ function launchConfetti() {
     opacity: 1,
     scaleX: 1,
     scaleXDir: Math.random() > 0.5 ? 1 : -1,
-    delay: idx * 1.5,
+    delay: idx * (mobile ? 0.8 : 1.5),
   }))
 
   function drawStar(ctx, x, y, r) {
@@ -42,12 +49,12 @@ function launchConfetti() {
       else ctx.lineTo(x + r * Math.cos(a1), y + r * Math.sin(a1))
       ctx.lineTo(x + (r * 0.45) * Math.cos(a2), y + (r * 0.45) * Math.sin(a2))
     }
-    ctx.closePath()
-    ctx.fill()
+    ctx.closePath(); ctx.fill()
   }
 
   let frame = 0
-  const anim = requestAnimationFrame(function loop() {
+  const FADE_START = Math.floor(MAX_FRAMES * 0.75)
+  const loop = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     pieces.forEach(p => {
       if (frame < p.delay) return
@@ -58,36 +65,28 @@ function launchConfetti() {
       p.vy += 0.04
       p.scaleX += p.scaleXDir * 0.04
       if (Math.abs(p.scaleX) > 1) p.scaleXDir *= -1
-
       if (p.y > canvas.height + 20) {
-        if (frame < 350) { p.y = -20; p.x = Math.random() * canvas.width; p.vy = Math.random() * 3 + 1.5 }
+        if (frame < FADE_START) { p.y = -20; p.x = Math.random() * canvas.width; p.vy = Math.random() * 3 + 1.5 }
       }
-      if (frame > 280) p.opacity = Math.max(0, p.opacity - 0.008)
-
+      if (frame > FADE_START) p.opacity = Math.max(0, p.opacity - 0.012)
       ctx.save()
       ctx.globalAlpha = p.opacity
       ctx.translate(p.x, p.y)
       ctx.rotate(p.angle)
       ctx.scale(p.scaleX, 1)
-      ctx.fillStyle = p.glitter ? `hsl(${(frame * 3 + p.x) % 360}, 90%, 65%)` : p.color
-
-      if (p.shape === 'circle') {
-        ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill()
-      } else if (p.shape === 'square') {
-        ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 1.4)
-      } else if (p.shape === 'triangle') {
-        ctx.beginPath(); ctx.moveTo(0, -p.r); ctx.lineTo(p.r, p.r); ctx.lineTo(-p.r, p.r); ctx.closePath(); ctx.fill()
-      } else if (p.shape === 'ribbon') {
-        ctx.fillRect(-p.r * 0.3, -p.r * 1.5, p.r * 0.6, p.r * 3)
-      } else if (p.shape === 'star') {
-        drawStar(ctx, 0, 0, p.r)
-      }
+      ctx.fillStyle = p.glitter ? `hsl(${(frame * 4 + p.x * 0.5) % 360}, 95%, 65%)` : p.color
+      if (p.shape === 'circle') { ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill() }
+      else if (p.shape === 'square') { ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 1.4) }
+      else if (p.shape === 'triangle') { ctx.beginPath(); ctx.moveTo(0, -p.r); ctx.lineTo(p.r, p.r); ctx.lineTo(-p.r, p.r); ctx.closePath(); ctx.fill() }
+      else if (p.shape === 'ribbon') { ctx.fillRect(-p.r * 0.3, -p.r * 1.5, p.r * 0.6, p.r * 3) }
+      else if (p.shape === 'star') { drawStar(ctx, 0, 0, p.r) }
       ctx.restore()
     })
     frame++
-    if (frame < 420) requestAnimationFrame(loop)
+    if (frame < MAX_FRAMES) requestAnimationFrame(loop)
     else canvas.remove()
-  })
+  }
+  requestAnimationFrame(loop)
 }
 
 // ── Victory sound ──────────────────────────────────────────────────────────
@@ -99,8 +98,7 @@ function playVictorySound() {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain); gain.connect(ctx.destination)
-      osc.frequency.value = freq
-      osc.type = 'sine'
+      osc.frequency.value = freq; osc.type = 'sine'
       gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12)
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.5)
       osc.start(ctx.currentTime + i * 0.12)
@@ -109,29 +107,45 @@ function playVictorySound() {
   } catch {}
 }
 
+// ── Theme toggle helper ────────────────────────────────────────────────────
+function ThemeToggle() {
+  const [dark, setDark] = React.useState(
+    document.documentElement.getAttribute('data-theme') === 'dark'
+  )
+  const toggle = () => {
+    const next = !dark
+    setDark(next)
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light')
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+  }
+  return (
+    <button onClick={toggle} style={{
+      background: 'var(--surface-2)', border: '1px solid var(--border)',
+      borderRadius: '20px', padding: '4px 12px', cursor: 'pointer',
+      fontSize: '1rem', color: 'var(--text-1)', flexShrink: 0,
+      lineHeight: 1.4
+    }}>
+      {dark ? '☀️' : '🌙'}
+    </button>
+  )
+}
+
 // ── Circular Timer ─────────────────────────────────────────────────────────
 function CircularTimer({ time, maxTime, color }) {
-  const r = 36
+  const r = 34
   const circ = 2 * Math.PI * r
   const pct = maxTime > 0 ? time / maxTime : 0
   const offset = circ * (1 - pct)
-  const glowColor = time <= 5 ? '#ef4444' : time <= 10 ? '#f59e0b' : '#2563eb'
+  const glowColor = time <= 5 ? '#ef444488' : time <= 10 ? '#f59e0b88' : '#2563eb44'
   return (
-    <svg width="90" height="90" style={{ transform: 'rotate(-90deg)', filter: `drop-shadow(0 0 8px ${glowColor}55)` }}>
-      <circle cx="45" cy="45" r={r} fill="none" stroke="var(--border)" strokeWidth="6" />
-      <circle
-        cx="45" cy="45" r={r}
-        fill="none" stroke={color} strokeWidth="6"
-        strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 0.9s linear, stroke 0.3s' }}
-      />
-      <text
-        x="45" y="45"
-        textAnchor="middle" dominantBaseline="central"
-        fill={color} fontSize="18" fontWeight="700"
-        style={{ transform: 'rotate(90deg)', transformOrigin: '45px 45px', fontVariantNumeric: 'tabular-nums' }}
-      >
+    <svg width="80" height="80" style={{ transform: 'rotate(-90deg)', filter: `drop-shadow(0 0 6px ${glowColor})`, flexShrink: 0 }}>
+      <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="5" />
+      <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="5"
+        strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 0.9s linear, stroke 0.3s' }} />
+      <text x="40" y="40" textAnchor="middle" dominantBaseline="central"
+        fill={color} fontSize="17" fontWeight="700"
+        style={{ transform: 'rotate(90deg)', transformOrigin: '40px 40px', fontVariantNumeric: 'tabular-nums' }}>
         {time}
       </text>
     </svg>
@@ -178,37 +192,30 @@ export default function QuizSession() {
     socket.on('waitingForTeacher', ({ students }) => { setWaiting(true); setWaitingStudents(students) })
     socket.on('lobbyUpdate', ({ students }) => setWaitingStudents(students))
     socket.on('countdown', ({ count }) => setCountdown(count))
+
     socket.on('startQuiz', ({ questions: qs, timePerQuestion }) => {
-      // Shuffle questions but preserve the original index for backend comparison
+      // ── KEY FIX: shuffle only QUESTION ORDER, NOT options ──────────────
+      // Options are kept in original order so selectedIndex always matches
+      // backend's question.options[selectedIndex] and question.correctIndex
       const withOrigIdx = qs.map((q, origIdx) => ({ ...q, origIdx }))
       const shuffled = [...withOrigIdx].sort(() => Math.random() - 0.5)
-
-      // Shuffle options per question but track original option indices
-      const final = shuffled.map(q => {
-        const optionsWithIdx = q.options.map((opt, i) => ({ opt, origIdx: i }))
-        const shuffledOpts = [...optionsWithIdx].sort(() => Math.random() - 0.5)
-        const newCorrectIdx = shuffledOpts.findIndex(o => o.origIdx === q.correctIndex)
-        return {
-          ...q,
-          options: shuffledOpts.map(o => o.opt),
-          correctIndex: newCorrectIdx,
-          // origIdx is already on the question from above
-        }
-      })
+      // correctIndex and options stay untouched — no remapping needed
 
       setWaiting(false); setCountdown(null)
-      setQuestions(final); questionsRef.current = final
+      setQuestions(shuffled); questionsRef.current = shuffled
       setMaxTime(timePerQuestion)
-      setTime(timePerQuestion); setQuestion(final[0]); setQIndex(0); qIndexRef.current = 0
+      setTime(timePerQuestion); setQuestion(shuffled[0])
+      setQIndex(0); qIndexRef.current = 0
       setAnswered(false); answeredRef.current = false; setSelectedOption(null)
       streakRef.current = 0; setStreak(0)
     })
+
     socket.on('liveLeaderboard', () => {})
     socket.on('quizResults', (data) => {
       setQuizDone(true)
       launchConfetti()
       playVictorySound()
-      setTimeout(() => nav('/results', { state: data }), 2800)
+      setTimeout(() => nav('/results', { state: data }), isMobile() ? 1800 : 2800)
     })
     socket.on('error', (msg) => { alert(msg); nav('/join') })
     return () => socket.disconnect()
@@ -225,10 +232,9 @@ export default function QuizSession() {
             setAnswered(true)
             streakRef.current = 0; setStreak(0)
             const currentQ = questionsRef.current[qIndexRef.current]
-            // Send original question index so backend uses correct question
             socketRef.current?.emit('answer', {
               sessionCode: code,
-              questionIndex: currentQ.origIdx,
+              questionIndex: currentQ.origIdx,  // original index for backend
               selectedIndex: null,
               name: studentName
             })
@@ -260,19 +266,19 @@ export default function QuizSession() {
     if (answered) return
     setSelectedOption(idx); setAnswered(true); answeredRef.current = true
     const currentQ = questionsRef.current[qIndexRef.current]
+    // correctIndex is original — idx is also original (options NOT shuffled) ✓
     const correct = currentQ?.correctIndex
     if (idx === correct) {
       const ns = streakRef.current + 1
       streakRef.current = ns; setStreak(ns)
-      if (ns >= 2) { setShowStreak(true); setTimeout(() => setShowStreak(false), 2200) }
+      if (ns >= 2) { setShowStreak(true); setTimeout(() => setShowStreak(false), 2000) }
     } else {
       streakRef.current = 0; setStreak(0)
     }
-    // Send original question index to backend
     socketRef.current?.emit('answer', {
       sessionCode: code,
-      questionIndex: currentQ.origIdx,
-      selectedIndex: idx,
+      questionIndex: currentQ.origIdx,  // original question index for backend
+      selectedIndex: idx,               // original option index — matches backend ✓
       name: studentName
     })
     goNext(qIndexRef.current)
@@ -281,10 +287,11 @@ export default function QuizSession() {
   const progress = questions.length > 0 ? ((qIndex + 1) / questions.length) * 100 : 0
   const timerColor = time <= 5 ? 'var(--error)' : time <= 10 ? 'var(--warning)' : 'var(--primary)'
 
+  // ── QUIZ DONE ────────────────────────────────────────────────────────────
   if (quizDone) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', background: 'var(--bg)' }}>
-        <div style={{ fontSize: '4rem', animation: 'bounceIn 0.6s ease' }}>🎉</div>
+        <div style={{ fontSize: '4rem' }}>🎉</div>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-1)' }}>Quiz Complete!</h2>
         <p style={{ color: 'var(--text-2)' }}>Calculating your results…</p>
         <div className="spinner spinner-lg" />
@@ -292,20 +299,15 @@ export default function QuizSession() {
     )
   }
 
+  // ── WAITING ROOM ─────────────────────────────────────────────────────────
   if (waiting) {
     return (
       <div className="page-center">
         <div className="page-inner-sm fade-in">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
-            <button
-              onClick={() => {
-                const d = document.documentElement.getAttribute('data-theme') === 'dark'
-                document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark')
-                localStorage.setItem('theme', d ? 'light' : 'dark')
-              }}
-              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '4px 12px', cursor: 'pointer', fontSize: '1rem' }}>
-              {document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}
-            </button>
+
+          {/* Theme toggle — always visible, doesn't overlap countdown */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            <ThemeToggle />
           </div>
 
           {countdown !== null ? (
@@ -327,7 +329,6 @@ export default function QuizSession() {
                 <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '1rem' }}>Waiting for teacher to start</p>
                 <div className="spinner" style={{ margin: '0 auto' }}></div>
               </div>
-
               <div className="card-section">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <span className="section-label" style={{ margin: 0 }}>In this room</span>
@@ -350,98 +351,92 @@ export default function QuizSession() {
 
   if (!question) return null
 
+  // ── QUIZ ──────────────────────────────────────────────────────────────────
   return (
-    <div className="page">
+    <div className="page" style={{ paddingTop: '1rem' }}>
       <style>{`
         @keyframes streakPop {
-          0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
-          30% { transform: translateX(-50%) scale(1.15); opacity: 1; }
-          80% { transform: translateX(-50%) scale(1); opacity: 1; }
+          0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
+          25%  { transform: translateX(-50%) scale(1.18); opacity: 1; }
+          80%  { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.9); opacity: 0; }
         }
         @keyframes fireGlow {
-          0%, 100% { text-shadow: 0 0 8px #f97316, 0 0 20px #ef4444; }
-          50% { text-shadow: 0 0 16px #f59e0b, 0 0 40px #f97316; }
+          0%,100% { text-shadow: 0 0 6px #f97316, 0 0 16px #ef4444; }
+          50%      { text-shadow: 0 0 14px #f59e0b, 0 0 32px #f97316; }
         }
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 10px #f97316aa, 0 0 30px #ef444455; }
-          50% { box-shadow: 0 0 20px #f97316, 0 0 50px #f9731688; }
+        @keyframes streakBadgePulse {
+          0%,100% { box-shadow: 0 0 8px #f97316aa, 0 2px 12px #ef444455; }
+          50%      { box-shadow: 0 0 18px #f97316, 0 2px 24px #f9731688; }
         }
-        @keyframes bounceIn {
-          0% { transform: scale(0); }
-          60% { transform: scale(1.2); }
-          100% { transform: scale(1); }
-        }
-        .streak-pill {
-          animation: streakPop 2s ease forwards;
-        }
-        .streak-fire {
-          animation: fireGlow 0.8s ease infinite;
-        }
-        .streak-badge {
-          animation: pulseGlow 0.8s ease infinite;
-        }
+        .streak-pill  { animation: streakPop 2s ease forwards; }
+        .streak-fire  { display:inline-block; animation: fireGlow 0.8s ease infinite; }
+        .streak-badge { animation: streakBadgePulse 0.9s ease infinite; }
       `}</style>
 
-      <div className="page-inner fade-in" style={{ maxWidth: '660px', position: 'relative' }}>
+      {/* Streak popup */}
+      {showStreak && streak >= 2 && (
+        <div className="streak-pill" style={{
+          position: 'fixed', top: '1rem', left: '50%',
+          background: 'linear-gradient(135deg,#f97316,#ef4444)',
+          color: '#fff', fontWeight: 800,
+          padding: '0.6rem 1.5rem', borderRadius: '100px', fontSize: '1rem',
+          zIndex: 9999, letterSpacing: '0.5px', whiteSpace: 'nowrap'
+        }}>
+          <span className="streak-fire">🔥</span> {streak} in a row!{streak >= 5 ? ' ⚡' : ''}
+        </div>
+      )}
 
-        {/* Streak banner */}
-        {showStreak && streak >= 2 && (
-          <div className="streak-pill" style={{
-            position: 'fixed', top: '1.2rem', left: '50%',
-            background: 'linear-gradient(135deg, #f97316, #ef4444)',
-            color: '#fff', fontWeight: 800,
-            padding: '0.65rem 1.75rem', borderRadius: '100px', fontSize: '1.05rem',
-            zIndex: 9999,
-            letterSpacing: '0.5px',
-          }}>
-            <span className="streak-fire">🔥</span> {streak} in a row!
-            {streak >= 5 && <span style={{ marginLeft: '8px' }}>⚡</span>}
-          </div>
-        )}
+      <div className="page-inner fade-in" style={{ maxWidth: '660px' }}>
 
-        {/* Top bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.875rem', gap: '0.5rem' }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)' }}>
-              Question {qIndex + 1} of {questions.length}
+        {/* Top bar: theme toggle + question counter + timer */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          {/* Left: theme + info */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2px', flexWrap: 'wrap' }}>
+              <ThemeToggle />
+              <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)' }}>
+                Q {qIndex + 1}/{questions.length}
+              </span>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{studentAvatar} {studentName}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {studentAvatar} {studentName}
+            </div>
             {streak >= 2 && (
               <div className="streak-badge" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '4px',
-                fontSize: '0.75rem', color: '#fff', fontWeight: 700, marginTop: '4px',
-                background: 'linear-gradient(135deg, #f97316, #ef4444)',
-                padding: '2px 10px', borderRadius: '100px',
+                fontSize: '0.72rem', color: '#fff', fontWeight: 700, marginTop: '4px',
+                background: 'linear-gradient(135deg,#f97316,#ef4444)',
+                padding: '2px 10px', borderRadius: '100px'
               }}>
                 <span className="streak-fire">🔥</span> {streak} streak!
               </div>
             )}
           </div>
+          {/* Right: timer */}
           <CircularTimer time={time} maxTime={maxTime} color={timerColor} />
         </div>
 
-        {/* Progress */}
+        {/* Progress bar */}
         <div className="progress-track" style={{ marginBottom: '1rem' }}>
-          <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
 
         {/* Question */}
-        <div className="card-section" style={{ marginBottom: '1.25rem', padding: '1.5rem' }}>
-          <p style={{ fontSize: '1.05rem', lineHeight: '1.7', margin: 0, fontWeight: '500', color: 'var(--text-1)' }}>
+        <div className="card-section" style={{ marginBottom: '1rem', padding: '1.25rem' }}>
+          <p style={{ fontSize: '1rem', lineHeight: '1.7', margin: 0, fontWeight: '500', color: 'var(--text-1)' }}>
             {question.text}
           </p>
         </div>
 
-        {/* Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        {/* Options — original order, no shuffling */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
           {question.options.map((opt, i) => {
             const isSelected = selectedOption === i
             return (
               <button key={i} onClick={() => choose(i)} disabled={answered}
                 className={`option-btn${isSelected ? ' selected' : ''}`}
-                style={{ opacity: answered && !isSelected ? 0.4 : 1, textAlign: 'left' }}
-              >
+                style={{ opacity: answered && !isSelected ? 0.4 : 1, textAlign: 'left' }}>
                 <span className="option-label">{String.fromCharCode(65 + i)}</span>
                 <span style={{ color: 'var(--text-1)', wordBreak: 'break-word' }}>{opt}</span>
               </button>
