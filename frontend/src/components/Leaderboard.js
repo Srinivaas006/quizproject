@@ -82,7 +82,7 @@ export default function Leaderboard() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {s.avatarUrl && <img src={s.avatarUrl} alt={s.name} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', backgroundColor: 'var(--surface-2)', flexShrink: 0 }} />}
                   <span style={{ fontSize: '0.9rem', fontWeight: isMe ? '700' : '500', color: 'var(--text-1)' }}>
-                    {s.name}{isMe ? ' (you)' : ''}
+                    {s.name}{isMe ? ' (you)' : ''}</span>
                   </div>
                   {s.rollNo && <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'monospace' }}>{s.rollNo}</div>}
                 </div>
