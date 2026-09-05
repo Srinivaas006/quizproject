@@ -208,7 +208,10 @@ export default function TeacherLeaderboard() {
                       {medal || (i + 1)}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', fontFamily: 'monospace' }}>{s.rollNo || '—'}</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: i < 3 ? '600' : '400', color: 'var(--text-1)' }}>{s.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {s.avatarUrl && <img src={s.avatarUrl} alt={s.name} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', backgroundColor: 'var(--surface-2)', flexShrink: 0 }} />}
+                      <span style={{ fontSize: '0.9rem', fontWeight: i < 3 ? '600' : '400', color: 'var(--text-1)' }}>{s.name}</span>
+                    </div>
                     <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--primary-text)', textAlign: 'center' }}>{s.score}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--success)', textAlign: 'center' }}>{s.correct}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--error)', textAlign: 'center' }}>{s.incorrect}</div>

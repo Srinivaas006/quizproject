@@ -13,6 +13,7 @@ function getSortedLeaderboard(sessionCode) {
       name: s.name,
       rollNo: s.rollNo || '',
       dept: s.dept || '',
+      avatarUrl: s.avatarUrl || '',
       score: s.score,
       correct: s.correct,
       incorrect: s.incorrect,
@@ -42,7 +43,7 @@ module.exports = (io) => {
       }
     })
 
-    socket.on('joinQuiz', async ({ sessionCode, name, rollNo, dept, year }) => {
+    socket.on('joinQuiz', async ({ sessionCode, name, rollNo, dept, year, avatarSeed, avatarStyle, avatarUrl }) => {
       try {
         const quiz = await Quiz.findOne({ sessionCode })
         if (!quiz) return socket.emit('error', 'Invalid session code')
@@ -55,6 +56,9 @@ module.exports = (io) => {
           rollNo: rollNo || '',
           dept: dept || '',
           year: year || '',
+          avatarSeed: avatarSeed || 'Hero',
+          avatarStyle: avatarStyle || 'adventurer',
+          avatarUrl: avatarUrl || '',
           sessionCode,
           score: 0,
           correct: 0,
@@ -181,6 +185,7 @@ module.exports = (io) => {
           rollNo: data.rollNo,
           dept: data.dept,
           year: data.year,
+          avatarUrl: data.avatarUrl || '',
           sessionCode,
           totalScore: finalScore,
           maxPossibleScore: data.totalQuestions,

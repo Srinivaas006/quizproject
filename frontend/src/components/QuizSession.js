@@ -176,7 +176,9 @@ export default function QuizSession() {
   const studentRollNo = location.state?.rollNo || ''
   const studentDept = location.state?.dept || ''
   const studentYear = location.state?.year || ''
-  const studentAvatar = location.state?.avatar || '🎓'
+  const studentAvatarSeed = location.state?.avatarSeed || 'Hero'
+  const studentAvatarStyle = location.state?.avatarStyle || 'adventurer'
+  const studentAvatarUrl = location.state?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=Hero`
 
   const qIndexRef = useRef(0)
   const answeredRef = useRef(false)
@@ -188,7 +190,7 @@ export default function QuizSession() {
     const socket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000')
     socketRef.current = socket
 
-    socket.emit('joinQuiz', { sessionCode: code, name: studentName, rollNo: studentRollNo, dept: studentDept, year: studentYear, avatar: studentAvatar })
+    socket.emit('joinQuiz', { sessionCode: code, name: studentName, rollNo: studentRollNo, dept: studentDept, year: studentYear, avatarSeed: studentAvatarSeed, avatarStyle: studentAvatarStyle, avatarUrl: studentAvatarUrl })
     socket.on('waitingForTeacher', ({ students }) => { setWaiting(true); setWaitingStudents(students) })
     socket.on('lobbyUpdate', ({ students }) => setWaitingStudents(students))
     socket.on('countdown', ({ count }) => setCountdown(count))
@@ -314,7 +316,10 @@ export default function QuizSession() {
             <div className="card-section" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
               <p style={{ fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', marginBottom: '1rem' }}>Quiz starts in</p>
               <div style={{ fontSize: '7rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1, textShadow: '0 0 30px var(--primary)' }}>{countdown}</div>
-              <p style={{ color: 'var(--text-2)', marginTop: '1.5rem', fontSize: '0.9rem' }}>{studentAvatar} {studentName}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                <img src={studentAvatarUrl} alt={studentAvatarSeed} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid var(--primary)' }} />
+                <span style={{ color: 'var(--text-2)', fontSize: '0.9rem' }}>{studentName}</span>
+              </div>
             </div>
           ) : (
             <>
@@ -323,7 +328,9 @@ export default function QuizSession() {
                   <span className="dot-online"></span>
                   <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>Connected · {code}</span>
                 </div>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{studentAvatar}</div>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <img src={studentAvatarUrl} alt={studentAvatarSeed} style={{ width: '72px', height: '72px', borderRadius: '50%', border: '3px solid var(--primary)', backgroundColor: 'var(--surface-2)' }} />
+                </div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-1)', marginBottom: '0.25rem' }}>{studentName}</h2>
                 {studentRollNo && <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginBottom: '1.25rem' }}>{studentRollNo} · {studentDept}</p>}
                 <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '1rem' }}>Waiting for teacher to start</p>
@@ -337,7 +344,7 @@ export default function QuizSession() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                   {waitingStudents.map((name, i) => (
                     <span key={i} style={{ padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', backgroundColor: name === studentName ? 'var(--primary)' : 'var(--surface-2)', color: name === studentName ? '#fff' : 'var(--text-1)', border: '1px solid var(--border)', fontWeight: name === studentName ? '600' : '400' }}>
-                      {name === studentName ? `${studentAvatar} ${name} (you)` : name}
+                      {name === studentName ? `${name} (you)` : name}
                     </span>
                   ))}
                 </div>
@@ -400,7 +407,10 @@ export default function QuizSession() {
               </span>
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {studentAvatar} {studentName}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <img src={studentAvatarUrl} alt={studentAvatarSeed} style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1px solid var(--border)' }} />
+                  {studentName}
+                </span>
             </div>
             {streak >= 2 && (
               <div className="streak-badge" style={{
