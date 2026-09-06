@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import io from 'socket.io-client'
 import { useLocation, useNavigate } from 'react-router-dom'
+import QRCode from 'qrcode'
 
 // Ambient tone generator for lobby
 function createAmbientMusic() {
@@ -14,7 +15,6 @@ function createAmbientMusic() {
     gain.gain.value = 0.05
     osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination)
     osc1.start(); osc2.start()
-    // Slowly modulate frequency for ambient feel
     let t = 0
     const interval = setInterval(() => {
       t += 0.02
@@ -35,7 +35,11 @@ export default function Lobby() {
   const [starting, setStarting] = useState(false)
   const [copied, setCopied] = useState(false)
   const [musicOn, setMusicOn] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState(null)
+  const [showQR, setShowQR] = useState(true)
   const musicRef = useRef(null)
+
+  const joinLink = `${window.location.origin}/join?code=${sessionCode}`
 
   useEffect(() => {
     if (!sessionCode) { nav('/create'); return }
@@ -45,6 +49,18 @@ export default function Lobby() {
     socket.on('quizStarted', () => nav('/teacher-leaderboard', { state: { sessionCode } }))
     return () => { socket.disconnect(); musicRef.current?.stop() }
   }, [socket, sessionCode, nav])
+
+  // Generate QR code image whenever join link is ready
+  useEffect(() => {
+    if (!sessionCode) return
+    QRCode.toDataURL(joinLink, {
+      width: 260,
+      margin: 1,
+      color: { dark: '#0f172a', light: '#ffffff' }
+    })
+      .then(setQrDataUrl)
+      .catch(err => console.log('QR generation failed', err))
+  }, [sessionCode])
 
   const toggleMusic = () => {
     if (musicOn) {
@@ -61,13 +77,19 @@ export default function Lobby() {
   }
 
   const copyLink = () => {
-    const link = `${window.location.origin}/join?code=${sessionCode}`
-    navigator.clipboard.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+    navigator.clipboard.writeText(joinLink).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
 
   const shareWhatsApp = () => {
-    const link = `${window.location.origin}/join?code=${sessionCode}`
-    window.open(`https://wa.me/?text=${encodeURIComponent(`Join my quiz! Code: ${sessionCode} or click: ${link}`)}`, '_blank')
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Join my quiz! Code: ${sessionCode} or click: ${joinLink}`)}`, '_blank')
+  }
+
+  const downloadQR = () => {
+    if (!qrDataUrl) return
+    const a = document.createElement('a')
+    a.href = qrDataUrl
+    a.download = `quiz_${sessionCode}_qr.png`
+    a.click()
   }
 
   return (
@@ -78,11 +100,11 @@ export default function Lobby() {
         <div className="page-header">
           <div className="page-header-left">
             <h1>Waiting Room</h1>
-            <p>Share the session code with your students</p>
+            <p>Share the session code, link, or QR with your students</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button onClick={toggleMusic} className="btn btn-secondary" style={{ fontSize: '0.82rem' }} title="Toggle ambient music">
-              {musicOn ? '🔇 Mute Music' : '🎵 Play Music'}
+              {musicOn ? 'Mute Music' : 'Play Music'}
             </button>
             <button onClick={() => nav('/create')} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>Back</button>
           </div>
@@ -91,25 +113,57 @@ export default function Lobby() {
         {/* Music status */}
         {musicOn && (
           <div className="alert alert-info" style={{ marginBottom: '1rem', fontSize: '0.82rem' }}>
-            🎵 Ambient lobby music is playing — students can hear the vibe when they wait
+            Ambient lobby music is playing — students can hear the vibe when they wait
           </div>
         )}
 
-        {/* Session code card */}
-        <div className="card-section" style={{ textAlign: 'center' }}>
-          <div className="section-label">Session Code</div>
-          <div className="code-badge">{sessionCode}</div>
+        {/* Session code + QR card */}
+        <div className="card-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div className="section-label" style={{ margin: 0 }}>Join This Quiz</div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button onClick={() => setShowQR(true)} style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', borderRadius: '999px', border: showQR ? '1.5px solid var(--primary)' : '1px solid var(--border)', backgroundColor: showQR ? 'var(--primary-light)' : 'var(--surface)', color: showQR ? 'var(--primary-text)' : 'var(--text-2)', cursor: 'pointer', fontWeight: '600' }}>QR Code</button>
+              <button onClick={() => setShowQR(false)} style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', borderRadius: '999px', border: !showQR ? '1.5px solid var(--primary)' : '1px solid var(--border)', backgroundColor: !showQR ? 'var(--primary-light)' : 'var(--surface)', color: !showQR ? 'var(--primary-text)' : 'var(--text-2)', cursor: 'pointer', fontWeight: '600' }}>Code</button>
+            </div>
+          </div>
+
+          {showQR ? (
+            <div style={{ textAlign: 'center' }}>
+              {qrDataUrl ? (
+                <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+                  <img src={qrDataUrl} alt="QR code to join quiz" style={{ width: '220px', height: '220px', display: 'block' }} />
+                </div>
+              ) : (
+                <div style={{ width: '220px', height: '220px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="spinner spinner-lg"></div>
+                </div>
+              )}
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginTop: '1rem', marginBottom: '0.25rem' }}>
+                Scan with phone camera to join instantly
+              </p>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: '1rem' }}>
+                No app needed — opens directly in browser
+              </p>
+              <button onClick={downloadQR} className="btn btn-secondary" style={{ fontSize: '0.8rem' }} disabled={!qrDataUrl}>
+                Download QR
+              </button>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <div className="code-badge">{sessionCode}</div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
             <button onClick={copyLink} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
-              {copied ? '✓ Copied!' : 'Copy Link'}
+              {copied ? 'Copied!' : 'Copy Link'}
             </button>
             <button onClick={shareWhatsApp} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
               Share on WhatsApp
             </button>
             <button onClick={() => {
-              const l = `${window.location.origin}/join?code=${sessionCode}`
-              if (navigator.share) navigator.share({ title: 'Join Quiz', text: `Code: ${sessionCode}`, url: l })
-              else { navigator.clipboard.writeText(l); alert('Link copied!') }
+              if (navigator.share) navigator.share({ title: 'Join Quiz', text: `Code: ${sessionCode}`, url: joinLink })
+              else { navigator.clipboard.writeText(joinLink); alert('Link copied!') }
             }} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
               Share
             </button>
